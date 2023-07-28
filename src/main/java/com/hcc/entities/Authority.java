@@ -1,5 +1,6 @@
 package com.hcc.entities;
 
+import com.hcc.enums.AuthorityEnum;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
@@ -14,19 +15,20 @@ public class Authority implements GrantedAuthority {
     private Long id;
 
     @Column(name = "authority")
-    private String authority;
+    @Enumerated(EnumType.STRING)
+    private AuthorityEnum authority;
 
     @ManyToOne
-    @Column(name = "user_id")
+    @JoinColumn(name = "user_id")
     private User user;
 
-    public Authority(String authority) {
+    public Authority(AuthorityEnum authority) {
         this.authority = authority;
     }
 
     @Override
     public String getAuthority() {
-        return authority;
+        return authority.name();
     }
 
 
