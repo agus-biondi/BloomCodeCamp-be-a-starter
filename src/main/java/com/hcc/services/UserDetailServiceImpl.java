@@ -20,8 +20,8 @@ public class UserDetailServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.getPasswordEncoder().encode("asdfasdf"));
+        //user.setUsername(username);
+        //user.setPassword(passwordEncoder.getPasswordEncoder().encode("asdfasdf"));
         return user;
     }
 }

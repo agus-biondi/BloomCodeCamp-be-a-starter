@@ -4,7 +4,6 @@ import com.hcc.enums.AuthorityEnum;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "authorities")
