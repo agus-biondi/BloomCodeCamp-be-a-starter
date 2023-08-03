@@ -1,6 +1,8 @@
 package com.hcc.controllers;
 
 import com.hcc.entities.Assignment;
+import com.hcc.repositories.AssignmentRepository;
+import com.hcc.services.AssignmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,27 +17,27 @@ public class AssignmentController {
 
     //@Autowired
     //UserService userService;
-    //@Autowired
-    //AssignmentService assignmentService;
+    @Autowired
+    AssignmentService assignmentService;
 
     @GetMapping("/")
     public List<Assignment> getAssignmentByUser() {
-        return null;
+        return assignmentService.getAssignmentsByUser();
     }
 
     @GetMapping("/{id}")
     public Assignment getAssignmentById(@PathVariable Long id){
-        return null;
+        return assignmentService.getAssignmentById(id);
     }
 
     @PutMapping("/{id}")
     public Assignment updateAssignmentById(@PathVariable Long id, @RequestBody Assignment assignment) {
-        return null;
+        return assignmentService.updateAssignmentById(id, assignment);
     }
 
     @PostMapping("/")
     public Assignment createAssignment(@RequestBody Assignment assignment) {
-        return null;
+        return assignmentService.createAssignment(assignment);
     }
 
 

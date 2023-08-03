@@ -25,23 +25,28 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
 
     @Autowired
     JwtFilter jwtFilter;
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-
         auth.userDetailsService(userDetailServiceImpl).passwordEncoder(customPasswordEncoder.getPasswordEncoder());
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().cors().disable(); // do not dissable this lot here just for now!!
+        http.csrf().disable().cors().disable(); // do not disable this lot here just for now!!
 
+        //each request is authenticated with a jwt token, no need to create sessions
         http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
 
+        //defines what happens when an unauthorized user tries to access secured page
         http = http.exceptionHandling().authenticationEntryPoint((request, response, exception) -> {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
         }).and();
 
+        //require all requests to be authenticated, if not redirect to a log-in page
         http.authorizeRequests().anyRequest().authenticated();
+
+        //use the jwtFilter to validate token, authenticate user, and set up Spring Security's security context
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     }
 

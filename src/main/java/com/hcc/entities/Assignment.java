@@ -48,4 +48,8 @@ public class Assignment {
         this.user = user;
         this.codeReviewer = codeReviewer;
     }
+
+    public Long getId() {
+        return id;
+    }
 }

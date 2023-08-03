@@ -2,13 +2,11 @@ package com.hcc.repositories;
 
 import com.hcc.entities.Assignment;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-public interface AssignmentRepository {
-    List<Assignment> getAllAssignments();
-    Assignment getAssignmentById(Long id);
-    Assignment createAssignment(Assignment assignment);
-    Assignment updateAssignment(Assignment assignment);
-    void deleteAssignment(Long id);
+@Repository
+public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
+
 }

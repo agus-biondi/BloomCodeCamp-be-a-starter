@@ -9,33 +9,26 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class AssignmentService implements AssignmentRepository {
+public class AssignmentService {
 
     @Autowired
     private AssignmentRepository assignmentRepository;
 
-    @Override
-    public List<Assignment> getAllAssignments() {
-        return assignmentRepository.findAll();
+    public List<Assignment> getAssignmentsByUser() {
+        return null;
     }
-
-    @Override
+    
     public Assignment getAssignmentById(Long id) {
-        return assignmentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assignment", "id", id));
+        return assignmentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found: " + id)
+                );
     }
 
-    @Override
+    public Assignment updateAssignmentById(Long id, Assignment assignment) {
+        return null;
+    }
+
     public Assignment createAssignment(Assignment assignment) {
-        return assignmentRepository.save(assignment);
-    }
-
-    @Override
-    public Assignment updateAssignment(Assignment assignment) {
-        return assignmentRepository.save(assignment);
-    }
-
-    @Override
-    public void deleteAssignment(Long id) {
-        assignmentRepository.deleteById(id);
+        return null;
     }
 }
