@@ -38,6 +38,7 @@ public class AuthenticationService {
         }
 
         User user = (User) userDetailService.loadUserByUsername(request.getUsername());
+        user.setPassword(null);
         String token = jwtUtil.generateToken(user);
         return new AuthCredentialResponseDto(token);
     }
