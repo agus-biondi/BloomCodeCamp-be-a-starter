@@ -20,4 +20,11 @@ public class AuthCredentialRequestDto {
         this.password = password;
     }
 
+    @Override
+    public String toString() {
+        return "AuthCredentialRequestDto{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }

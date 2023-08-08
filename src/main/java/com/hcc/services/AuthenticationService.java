@@ -1,9 +1,13 @@
 package com.hcc.services;
 
+import com.hcc.controllers.AuthenticationController;
 import com.hcc.entities.User;
 import com.hcc.dtos.AuthCredentialRequestDto;
 import com.hcc.dtos.AuthCredentialResponseDto;
+import com.hcc.utils.CustomPasswordEncoder;
 import com.hcc.utils.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,22 +25,21 @@ public class AuthenticationService {
     AuthenticationManager authenticationManager;
 
     @Autowired
+    CustomPasswordEncoder customPasswordEncoder;
+    @Autowired
     UserDetailServiceImpl userDetailService;
 
-    public AuthCredentialResponseDto login(AuthCredentialRequestDto request) throws Exception{
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getUsername(),
-                            request.getPassword()
-                    ));
-        } catch (UsernameNotFoundException e) {
-            throw new Exception("Username not found", e);
-        } catch (BadCredentialsException e) {
-            throw new Exception("Invalid Credentials", e);
-        }
-
+    public AuthCredentialResponseDto login(AuthCredentialRequestDto request) throws UsernameNotFoundException, BadCredentialsException{
+        logger.info("auth service logging in");
+        logger.info(String.format("user: %s password: %s", request.getUsername(), request.getPassword()));
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getUsername(),
+                        request.getPassword()
+                ));
+        logger.info("did we get here?");
         User user = (User) userDetailService.loadUserByUsername(request.getUsername());
         user.setPassword(null);
         String token = jwtUtil.generateToken(user);

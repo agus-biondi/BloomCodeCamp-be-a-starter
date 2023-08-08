@@ -13,8 +13,12 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 
 @EnableWebSecurity
 public class SecurityConfig  extends WebSecurityConfigurerAdapter {
@@ -35,7 +39,10 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().cors().disable(); // do not disable this lot here just for now!!
+        http
+            .cors().and()
+            .csrf().disable();
+        //http.csrf().disable().cors().disable(); // do not disable this lot here just for now!!
 
         //each request is authenticated with a jwt token, no need to create sessions
         http = http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and();
@@ -47,11 +54,9 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
 
         //require all requests to be authenticated, if not redirect to a log-in page
         http.authorizeRequests()
-                .antMatchers("/login.html").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .logout()
-                .permitAll();
+                .antMatchers("/api/auth/login").permitAll()
+                .anyRequest().authenticated();
+
 
 
         //use the jwtFilter to validate token, authenticate user, and set up Spring Security's security context
@@ -62,5 +67,20 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(Arrays.asList("*")); // allow all origins
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")); // allow all HTTP methods
+        configuration.setAllowedHeaders(Arrays.asList("*")); // allow all headers
+
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+    }
+
 
 }
