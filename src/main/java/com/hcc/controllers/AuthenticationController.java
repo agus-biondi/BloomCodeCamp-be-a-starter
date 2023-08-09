@@ -29,25 +29,26 @@ public class AuthenticationController {
             @RequestBody AuthCredentialRequestDto authCredentialRequest) {
         logger.info("login request");
         logger.info(authCredentialRequest.toString());
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+
+        }
         return ResponseEntity.ok(authenticationService.login(authCredentialRequest));
 
     }
 
-    @PostMapping("/auth/validate")
+    @GetMapping("/auth/validate")
     public ResponseEntity<Boolean> validate(
-           @RequestParam String token, @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(authenticationService.validate());
+            @RequestHeader("Authorization") String token, @AuthenticationPrincipal User user) {
+        logger.info("validated token");
+        return ResponseEntity.ok(true);
     }
 
     public AuthenticationController() {
 
     }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<String> handleUserNotFoundException(UsernameNotFoundException e) {
-        //logger.info(e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-    }
 /*
     @ExceptionHandler(AccessDisabledException.class)
     public ResponseEntity<String> handleAccessDisabledException(AccessDisabledException e) {
@@ -58,7 +59,6 @@ public class AuthenticationController {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<String> handleIncorrectCredentialsException(BadCredentialsException e) {
-        //logger.info(e.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
     }
 

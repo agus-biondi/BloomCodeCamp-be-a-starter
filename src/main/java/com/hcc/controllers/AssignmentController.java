@@ -1,10 +1,12 @@
 package com.hcc.controllers;
 
 import com.hcc.entities.Assignment;
+import com.hcc.entities.User;
 import com.hcc.repositories.AssignmentRepository;
 import com.hcc.services.AssignmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,7 +23,7 @@ public class AssignmentController {
     AssignmentService assignmentService;
 
     @GetMapping("/")
-    public List<Assignment> getAssignmentByUser() {
+    public List<Assignment> getAssignmentByUser(@AuthenticationPrincipal User user) {
         return assignmentService.getAssignmentsByUser();
     }
 
