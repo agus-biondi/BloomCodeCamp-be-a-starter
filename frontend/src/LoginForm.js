@@ -1,5 +1,5 @@
 import React, {
-	useState
+	useState, useEffect
 } from 'react';
 import styled, {
 	keyframes
@@ -9,11 +9,6 @@ import {
 	useNavigate
 } from 'react-router-dom';
 
-const LogoImage = styled.img`
-  width: 150px;
-  margin-left: auto;
-  margin-right: auto;
-`;
 
 const rotate = keyframes`
   0% { transform: rotate(0deg); }
@@ -27,14 +22,19 @@ const Page = styled.div`
   justify-content: flex-start;
   align-items: center;
   background: linear-gradient(120deg, #0d1117, #161b22);
+  position:relative;
 `;
 
 const LoginForm = styled.div`
   width: 300px;
-  padding: 20px;
+  padding: 0px 60px 25px;
   background: #242526;
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
 `;
 
 const Input = styled.input`
@@ -77,11 +77,15 @@ const LoadingIcon = styled.div`
   margin-left: 5px;
 `;
 
-const Header = styled.h1`
-  color: #e4e6eb;
-  font-family: 'Arial', sans-serif;
-  text-align: center;
-  margin-bottom: 20px;
+
+const LogoImage = styled.img`
+  width: 200px;
+  margin-bottom: -20px
+`;
+
+const TitleImage = styled.img`
+  width: 650px;
+  margin-top: -20px
 `;
 
 const ErrorMessage = styled.p`
@@ -96,9 +100,36 @@ const LoginPage = () => {
 	const [password, setPassword] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
 
-	const handleLogin = async () => {
+    useEffect(() => {
+        console.log("mounted");
+        const token = localStorage.getItem('jwt');
+
+        if (token) {
+            setLoading(true);
+            axios.get('http://localhost:8080/api/auth/validate', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (response.data) {
+                    setLoading(false);
+                    navigate('/dashboard');
+                }
+            })
+            .catch(err => {
+                localStorage.removeItem('jwt');
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+        }
+    });
+
+	const handleLogin = async (event) => {
 		setLoading(true);
 		setErrorMessage('');
+		event.preventDefault();
 
 		try {
 			const response = await axios.post('http://localhost:8080/api/auth/login', {
@@ -123,7 +154,6 @@ const LoginPage = () => {
 						break;
 				}
 			} else {
-
 				setErrorMessage('An error occurred, and I refuse to give more information');
 			}
 		} finally {
@@ -133,15 +163,22 @@ const LoginPage = () => {
     return (
 
       <Page>
-      <LogoImage src="/images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+
+
+
+
+
         <LoginForm>
-          <Header>Bloom Code Camp</Header>
-            <Input type="text" placeholder="Username" onChange={e => setUsername(e.target.value)} value={username}/>
-            <Input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} value={password} />
-            <Button onClick={handleLogin}>
+                <LogoImage src="images/bloom_icon_no_bg.png" />
+          <TitleImage src="images/bloom_title_w_tagline.png" />
+          <form onSubmit={handleLogin}>
+            <Input type="text" placeholder="Username" onChange={e => setUsername(e.target.value)} value={username} autoComplete="username"/>
+            <Input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} value={password} autoComplete="current-password"/>
+            <Button type="submit">
               {loading ? <LoadingIcon /> : "Login"}
             </Button>
           {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
+          </form>
         </LoginForm>
       </Page>
     );

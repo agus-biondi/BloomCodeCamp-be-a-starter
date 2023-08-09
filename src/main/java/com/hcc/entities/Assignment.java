@@ -1,11 +1,15 @@
 package com.hcc.entities;
 
+import com.hcc.enums.AssignmentEnum;
 import com.hcc.enums.AssignmentStatusEnum;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "assignments")
+@Getter
 public class Assignment {
 
     @Id
@@ -17,7 +21,8 @@ public class Assignment {
     private AssignmentStatusEnum status;
 
     @Column(name = "number")
-    private int number;
+    @Enumerated(EnumType.ORDINAL)
+    private AssignmentEnum number;
 
     @Column(name = "github_url")
     private String githubUrl;
@@ -39,7 +44,7 @@ public class Assignment {
 
     }
 
-    public Assignment(AssignmentStatusEnum status, int number, String githubUrl, String branch, String reviewVideoUrl, User user, User codeReviewer) {
+    public Assignment(AssignmentStatusEnum status, AssignmentEnum number, String githubUrl, String branch, String reviewVideoUrl, User user, User codeReviewer) {
         this.status = status;
         this.number = number;
         this.githubUrl = githubUrl;
@@ -51,5 +56,10 @@ public class Assignment {
 
     public Long getId() {
         return id;
+    }
+
+
+    public void setStatus(AssignmentStatusEnum status) {
+        this.status = status;
     }
 }

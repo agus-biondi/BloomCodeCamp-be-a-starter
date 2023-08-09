@@ -1,6 +1,8 @@
 package com.hcc.services;
 
 import com.hcc.entities.Assignment;
+import com.hcc.entities.User;
+import com.hcc.enums.AssignmentEnum;
 import com.hcc.exceptions.ResourceNotFoundException;
 import com.hcc.repositories.AssignmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +16,12 @@ public class AssignmentService {
     @Autowired
     private AssignmentRepository assignmentRepository;
 
-    public List<Assignment> getAssignmentsByUser() {
+    public List<Assignment> getAssignmentsByUser(User user) {
         return null;
+    }
+
+    public boolean doesUserHaveAssignment(User user, AssignmentEnum assignmentNumber) {
+        return assignmentRepository.findByUserAndNumber(user, assignmentNumber).isPresent();
     }
     
     public Assignment getAssignmentById(Long id) {

@@ -2,18 +2,22 @@
 package com.hcc.utils;
 
 
+import com.hcc.entities.Authority;
 import com.hcc.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
 
 @Component
@@ -56,15 +60,12 @@ public class JwtUtil {
 
     //generate token
     public String generateToken(User user){
-        return doGenerateToken(user.getUsername());
-
+        return doGenerateToken(user.getUsername(), user.getAuthorities());
     }
 
-    private String doGenerateToken(String subject){
+    private String doGenerateToken(String subject, Collection<? extends GrantedAuthority> authorities){
         Claims claims = Jwts.claims().setSubject(subject);
-        claims.put("scopes",
-                Arrays.asList(new SimpleGrantedAuthority("LEARNER_ROLE"),
-                new SimpleGrantedAuthority("CODE_REVIEWER_ROLE")));
+        claims.put("scopes", authorities);
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date(System.currentTimeMillis()))

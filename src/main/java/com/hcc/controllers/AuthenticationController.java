@@ -42,6 +42,11 @@ public class AuthenticationController {
     public ResponseEntity<Boolean> validate(
             @RequestHeader("Authorization") String token, @AuthenticationPrincipal User user) {
         logger.info("validated token");
+        try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+
+        }
         return ResponseEntity.ok(true);
     }
 
