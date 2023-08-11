@@ -1,15 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faHome, faSignOutAlt, faTimesCircle, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const Sidebar = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 200px;
+  background-color: #023D36;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;  // Adjusted padding based on the logo's size
+  box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+`;
+
+const SidebarButton = styled.button`
+  background-color: transparent;
+  border: none;
+  color: #FBCF75;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin: 15px 0;
+  transition: 0.3s;
+
+  &:hover {
+    color: #FBCF75;
+    transform: scale(1.1);
+  }
+`;
+
 const LogoImage = styled.img`
   width: 175px;
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  margin-bottom: 20px;
 `;
 
 const Page = styled.div`
@@ -22,7 +52,8 @@ const Page = styled.div`
 `;
 
 const MainContent = styled.div`
-  width: 100%;
+  width: calc(100% - 200px);  // This subtracts the sidebar width
+  margin-left: 200px;        // This pushes the main content to the right of the sidebar
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -32,6 +63,7 @@ const MainContent = styled.div`
 `;
 
 const TitleImage = styled.img`
+  margin-left: 200px;
   width: auto;
   height: 210px;
   margin-bottom: 20px;
@@ -114,12 +146,79 @@ const LogoutButton = styled.button`
   }
 `;
 
+const HomeButton = styled.button`
+  width: 150px;
+  height: 50px;
+  background-color: #023D36;
+  color: #FBCF75;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+
+  &:hover {
+    background-color: #FBCF75;
+    color: #023D36;
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+`;
+
 const PlaceholderText = styled.p`
   color: #FBCF75;
 `;
 
+const CreateAssignmentCard = styled(AssignmentCard)`
+  background-color: #3a3b3c;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const PlusIcon = styled(FontAwesomeIcon)`
+  color: #FBCF75;
+  font-size: 3em;
+`;
+
+const handleCreateAssignment = () => {
+
+};
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  width: 80%;
+  max-width: 500px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1001;
+`;
+
 const StudentDashboard = () => {
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [assignments, setAssignments] = useState({
           rejected: [],
           inReview: [],
@@ -128,7 +227,7 @@ const StudentDashboard = () => {
 
 
     useEffect(() => {
-        axios.get('http://localhost:8080/api/assignments"')
+        axios.get('http://localhost:8080/api/assignments')
             .then(response => {
                 if (response.data.success) {
                     const fetchedAssignments = response.data.data;
@@ -148,16 +247,44 @@ const StudentDashboard = () => {
     }, []);
 
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    navigate('/login');
-  };
+    const handleLogout = () => {
+        localStorage.removeItem('jwt');
+        navigate('/login');
+    };
+
+    const handleHomeClick = () => {
+        navigate('/homepage');
+    };
 
   return (
     <Page>
-      <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+     <Sidebar>
+         <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+
+         <SidebarButton onClick={handleHomeClick}>
+           <FontAwesomeIcon icon={faHome} />
+           Home
+         </SidebarButton>
+         <SidebarButton onClick={() => setIsModalOpen(true)}>
+           <FontAwesomeIcon icon={faPlus} />
+           New Assignment
+         </SidebarButton>
+         <SidebarButton onClick={handleLogout}>
+           <FontAwesomeIcon icon={faSignOutAlt} />
+           Logout
+         </SidebarButton>
+     </Sidebar>
+
+      {isModalOpen && (
+        <ModalOverlay onClick={() => setIsModalOpen(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            {/* Modal content goes here */}
+          </ModalContent>
+        </ModalOverlay>
+      )}
       <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
       <MainContent>
+
         <AssignmentSection>
           <SectionHeader>Rejected Assignments</SectionHeader>
               <CardsContainer>
@@ -194,7 +321,7 @@ const StudentDashboard = () => {
             {assignments.completed.length > 0 ? (
               assignments.completed.map((assignment, idx) => (
                 <AssignmentCard key={idx}>
-                  <CardIcon icon={faSpinner} />
+                  <CardIcon icon={faCheckCircle} />
                   <CardText>{assignment.title}</CardText>
                 </AssignmentCard>
               ))
@@ -204,7 +331,6 @@ const StudentDashboard = () => {
           </CardsContainer>
         </AssignmentSection>
       </MainContent>
-      <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
     </Page>
   );
 }

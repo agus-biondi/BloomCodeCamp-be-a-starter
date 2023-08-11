@@ -3,13 +3,12 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBug, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faBug, faFolderOpen, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+
 
 const LogoImage = styled.img`
   width: 175px;
-  position: absolute;
-  top: 10px;
-  left: 10px;
+  margin-bottom: 20px;
 `;
 
 const Page = styled.div`
@@ -21,8 +20,41 @@ const Page = styled.div`
   padding-bottom: 20px;
 `;
 
+const Sidebar = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 200px;
+  background-color: #023D36;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;  // Adjusted padding based on the logo's size
+  box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+`;
+
+const SidebarButton = styled.button`
+  background-color: transparent;
+  border: none;
+  color: #FBCF75;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  margin: 15px 0;
+  transition: 0.3s;
+
+  &:hover {
+    color: #FBCF75;
+    transform: scale(1.1);
+  }
+`;
+
 const MainContent = styled.div`
-  width: 100%;
+  width: calc(100% - 200px);  // This subtracts the sidebar width
+  margin-left: 200px;        // This pushes the main content to the right of the sidebar
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -32,9 +64,10 @@ const MainContent = styled.div`
 `;
 
 const TitleImage = styled.img`
+  margin-left: 200px;
   width: auto;
   height: 210px;
-  margin-bottom: -0px;
+  margin-bottom: 20px;
 `;
 
 const RoleCard = styled.div`
@@ -133,37 +166,43 @@ const HomePage = () => {
     navigate('/login');
   };
 
-  return (
+return (
     <Page>
-    <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
-    <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
-    <MainContent>
-      <CardContainer>
-        {roles.includes('ROLE_STUDENT') && (
-          <RoleCard onClick={() => navigate('/student_dashboard')}>
-            <CardHeader>
-              <CardIcon icon={faFolderOpen} shake size="lg" />
-            </CardHeader>
-            <CardSection>
-              <CardText>Student Dashboard</CardText>
-            </CardSection>
-          </RoleCard>
-        )}
-        {roles.includes('ROLE_REVIEWER') && (
-          <RoleCard onClick={() => navigate('/reviewer_dashboard')}>
-            <CardHeader>
-              <CardIcon icon={faBug} />
-            </CardHeader>
-            <CardSection>
-              <CardText>Review Students Assignments</CardText>
-            </CardSection>
-          </RoleCard>
-        )}
-      </CardContainer>
+
+      <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
+
+      <Sidebar>
+               <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+               <SidebarButton onClick={handleLogout}>
+                 <FontAwesomeIcon icon={faSignOutAlt} />
+                 Logout
+               </SidebarButton>
+           </Sidebar>
+
+      <MainContent>
+        <CardContainer>
+          {roles.includes('ROLE_STUDENT') && (
+            <RoleCard onClick={() => navigate('/student_dashboard')}>
+              <CardHeader>
+                <CardIcon icon={faFolderOpen} shake size="lg" />
+              </CardHeader>
+              <CardSection>
+                <CardText>Student Dashboard</CardText>
+              </CardSection>
+            </RoleCard>
+          )}
+          {roles.includes('ROLE_REVIEWER') && (
+            <RoleCard onClick={() => navigate('/reviewer_dashboard')}>
+              <CardHeader>
+                <CardIcon icon={faBug} />
+              </CardHeader>
+              <CardSection>
+                <CardText>Review Students Assignments</CardText>
+              </CardSection>
+            </RoleCard>
+          )}
+        </CardContainer>
       </MainContent>
-      <LogoutButton onClick={handleLogout}>
-        Logout
-      </LogoutButton>
     </Page>
   );
 }
