@@ -6,7 +6,9 @@ import com.hcc.entities.Assignment;
 import com.hcc.entities.User;
 import com.hcc.enums.AssignmentEnum;
 import com.hcc.enums.AssignmentStatusEnum;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AssignmentMapper {
     public static Assignment creationDtoToEntity(AssignmentCreationRequestDto dto, User user) {
         return new Assignment(

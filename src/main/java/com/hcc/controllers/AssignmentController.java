@@ -5,24 +5,25 @@ import com.hcc.dtos.Assignments.AssignmentCreationRequestDto;
 import com.hcc.dtos.Assignments.AssignmentResponseDto;
 import com.hcc.dtos.Assignments.AssignmentUpdateRequestDto;
 import com.hcc.entities.Assignment;
+import com.hcc.entities.Authority;
 import com.hcc.entities.User;
 import com.hcc.enums.AssignmentEnum;
 import com.hcc.enums.AssignmentStatusEnum;
 import com.hcc.enums.AuthorityEnum;
+import com.hcc.exceptions.ResourceNotFoundException;
 import com.hcc.services.AssignmentService;
 import com.hcc.services.UserService;
 import com.hcc.utils.AssignmentMapper;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @RestController
@@ -41,13 +42,53 @@ public class AssignmentController {
 
 
     @GetMapping("/")
-    public List<Assignment> getAssignmentByUser(@AuthenticationPrincipal User user) {
-        return assignmentService.getAssignmentsByUser(user);
+    public ResponseEntity<ApiResponse> getAssignmentsByUser(
+            @AuthenticationPrincipal User user) {
+        ApiResponse response = new ApiResponse();
+        List<Assignment> assignments;
+
+        boolean isReviewer = user.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals(AuthorityEnum.ROLE_REVIEWER.name()));
+
+        if (isReviewer) {
+            assignments = assignmentService.getAssignmentsByCodeReviewer(user);
+        } else {
+            assignments = assignmentService.getAssignmentsByUser(user);
+        }
+
+        response.setSuccess(true);
+        response.setData(assignments);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public Assignment getAssignmentById(@PathVariable Long id){
-        return assignmentService.getAssignmentById(id);
+    public ResponseEntity<ApiResponse> getAssignmentById(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user){
+
+        ApiResponse response = new ApiResponse();
+        Assignment assignment;
+        try {
+            assignment = assignmentService.getAssignmentById(id);
+
+            if (!assignment.getUser().getUsername().equals(user.getUsername()) &&
+                    !user.getAuthorities().contains(AuthorityEnum.ROLE_REVIEWER.name())) {
+                response.setSuccess(false);
+                response.setMessage("You don't have permission to see this");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            response.setSuccess(false);
+            response.setMessage("Assignment not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage("Could not complete your request");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
     }
 
     @PutMapping("/{id}")
@@ -58,11 +99,62 @@ public class AssignmentController {
 
         ApiResponse response = new ApiResponse();
 
+        //User doesn't have authority to act the way he's claiming
+        boolean hasRequiredAuthority = user.getAuthorities()
+                .stream()
+                .anyMatch(authority -> authority.getAuthority()
+                        .equals(updateRequest.getUpdateAssignmentAsRole().name())
+                );
 
+        if (!hasRequiredAuthority) {
+            response.setSuccess(false);
+            response.setMessage(String.format("Can't update assignment with a role of %s because user %s doesn't have that role",
+                    updateRequest.getUpdateAssignmentAsRole(),
+                    user.getUsername()));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
 
-        //if (updateRequest.getStatus() )
+        //Modification type is not allowed for user role, e.g. Mark as Completed as a Student
+        if (!isValidStatusChange(updateRequest.getStatus(), updateRequest.getUpdateAssignmentAsRole())) {
+            response.setSuccess(false);
+            response.setMessage(String.format("I'm afraid I can't let you do that Dave...Change an assignment to %s with the role of %s, that is.",
+                    updateRequest.getStatus(),
+                    user.getAuthorities()));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
 
-        return null;
+        //Assignment exists?
+        Assignment existingAssignment;
+        try {
+            existingAssignment = assignmentService.getAssignmentById(id);
+        } catch (ResourceNotFoundException e) {
+            response.setSuccess(false);
+            response.setMessage("Assignment not found " + id);
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        //Student can only change his own assignment
+        if (updateRequest.getUpdateAssignmentAsRole().equals(AuthorityEnum.ROLE_STUDENT) &&
+                !existingAssignment.getUser().getUsername().equals(user.getUsername())) {
+            response.setSuccess(false);
+            response.setMessage("This isn't yours");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        try {
+            Assignment updatedAssignment = assignmentService.updateAssignment(existingAssignment, updateRequest);
+            AssignmentResponseDto responseDto = assignmentMapper.toResponseDto(updatedAssignment);
+
+            response.setSuccess(true);
+            response.setData(responseDto);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage("Error updating assignment.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
     }
 
     @PostMapping("/")
@@ -125,7 +217,15 @@ public class AssignmentController {
         }
 
     }
-    
+
+    private boolean isValidStatusChange(AssignmentStatusEnum status, AuthorityEnum authority) {
+
+        List<AssignmentStatusEnum> validStatuses = validStatusChangesForRoleMap.get(authority);
+        if (validStatuses != null && validStatuses.contains(status)) {
+            return true;
+        }
+        return false;
+    }
     @PostConstruct
     public void init() {
 

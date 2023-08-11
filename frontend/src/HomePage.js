@@ -1,0 +1,171 @@
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import jwtDecode from 'jwt-decode';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBug, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+
+const LogoImage = styled.img`
+  width: 175px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+`;
+
+const Page = styled.div`
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+`;
+
+const MainContent = styled.div`
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: -100px;
+`;
+
+const TitleImage = styled.img`
+  width: auto;
+  height: 210px;
+  margin-bottom: -0px;
+`;
+
+const RoleCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 200px;
+  height: 250px;
+  margin: 10px;
+  border-radius: 30px;
+  background-color: #023D36;
+  cursor: pointer;
+  transition: transform 0.3s;
+  &:hover {
+    transform: scale(1.05);
+  }
+`;
+
+const CardHeader = styled.div`
+  width: 100%;
+  height: 60%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #3a3b3c;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+`;
+
+const CardSection = styled.div`
+  width: 100%;
+  height: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #242526;
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+`;
+
+const CardIcon = styled(FontAwesomeIcon)`
+  color: #FBCF75;
+  font-size: 3em;
+`;
+
+const CardText = styled.p`
+  text-transform: capitalize;
+  text-align: center;
+  color: #FBCF75;
+  font-weight: bold;
+`;
+
+const LogoutButton = styled.button`
+  width: 150px;
+  height: 50px;
+  background-color: #023D36;
+  color: #FBCF75;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #FBCF75;
+    color: #023D36;
+  }
+`;
+
+const CardContainer = styled.div`
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top:-100px;
+
+`;
+
+const HomePage = () => {
+  const navigate = useNavigate();
+  const [roles, setRoles] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwt');
+
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      const roles = decodedToken.scopes.map(scope => scope.authority);
+      setRoles(roles);
+    } else {
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('jwt');
+    navigate('/login');
+  };
+
+  return (
+    <Page>
+    <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+    <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
+    <MainContent>
+      <CardContainer>
+        {roles.includes('ROLE_STUDENT') && (
+          <RoleCard onClick={() => navigate('/student_dashboard')}>
+            <CardHeader>
+              <CardIcon icon={faFolderOpen} shake size="lg" />
+            </CardHeader>
+            <CardSection>
+              <CardText>Student Dashboard</CardText>
+            </CardSection>
+          </RoleCard>
+        )}
+        {roles.includes('ROLE_REVIEWER') && (
+          <RoleCard onClick={() => navigate('/reviewer_dashboard')}>
+            <CardHeader>
+              <CardIcon icon={faBug} />
+            </CardHeader>
+            <CardSection>
+              <CardText>Review Students Assignments</CardText>
+            </CardSection>
+          </RoleCard>
+        )}
+      </CardContainer>
+      </MainContent>
+      <LogoutButton onClick={handleLogout}>
+        Logout
+      </LogoutButton>
+    </Page>
+  );
+}
+
+export default HomePage;

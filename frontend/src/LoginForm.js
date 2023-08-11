@@ -16,14 +16,13 @@ const rotate = keyframes`
 `;
 
 const Page = styled.div`
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  background: linear-gradient(120deg, #0d1117, #161b22);
-  position:relative;
 `;
+
 
 const LoginForm = styled.div`
   width: 300px;
@@ -58,13 +57,15 @@ const Button = styled.button`
   margin: 10px 0;
   border: none;
   border-radius: 5px;
-  background: #007a99;
-  color: white;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: background 0.4s;
+  background: #023D36;
+  color: #FBCF75;
   &:hover {
-    background: #0099cc;
+    background: #FBCF75;
+    color: #023D36;
   }
+
 `;
 
 const LoadingIcon = styled.div`
@@ -79,12 +80,12 @@ const LoadingIcon = styled.div`
 
 
 const LogoImage = styled.img`
-  width: 200px;
+  width: 210px;
   margin-bottom: -20px
 `;
 
 const TitleImage = styled.img`
-  width: 650px;
+  width: 600px;
   margin-top: -20px
 `;
 
@@ -99,7 +100,7 @@ const LoginPage = () => {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
-
+/*
     useEffect(() => {
         console.log("mounted");
         const token = localStorage.getItem('jwt');
@@ -114,7 +115,7 @@ const LoginPage = () => {
             .then(response => {
                 if (response.data) {
                     setLoading(false);
-                    navigate('/dashboard');
+                    navigate('/homepage');
                 }
             })
             .catch(err => {
@@ -124,7 +125,7 @@ const LoginPage = () => {
                 setLoading(false);
             });
         }
-    });
+    }); */
 
 	const handleLogin = async (event) => {
 		setLoading(true);
@@ -142,7 +143,7 @@ const LoginPage = () => {
 
 			localStorage.setItem('jwt', token);
 
-			navigate('/dashboard');
+			navigate('/homepage');
 		} catch (error) {
 			if (error.response) {
 				switch (error.response.status) {
@@ -163,11 +164,6 @@ const LoginPage = () => {
     return (
 
       <Page>
-
-
-
-
-
         <LoginForm>
                 <LogoImage src="images/bloom_icon_no_bg.png" />
           <TitleImage src="images/bloom_title_w_tagline.png" />

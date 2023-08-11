@@ -58,8 +58,47 @@ public class Assignment {
         return id;
     }
 
+    public AssignmentStatusEnum getStatus() {
+        return status;
+    }
+
+    public AssignmentEnum getNumber() {
+        return number;
+    }
+
+    public String getGithubUrl() {
+        return githubUrl;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public String getReviewVideoUrl() {
+        return reviewVideoUrl;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public User getCodeReviewer() {
+        return codeReviewer;
+    }
 
     public void setStatus(AssignmentStatusEnum status) {
         this.status = status;
+    }
+
+    public void setGithubUrl(String githubUrl) {
+        this.githubUrl = githubUrl;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public void setReviewVideoUrl(String reviewVideoUrl) {
+        this.reviewVideoUrl = reviewVideoUrl;
     }
 }

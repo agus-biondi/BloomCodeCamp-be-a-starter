@@ -61,6 +61,7 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> roles = new ArrayList<>();
         roles.add(new Authority(AuthorityEnum.ROLE_STUDENT));
+        roles.add(new Authority(AuthorityEnum.ROLE_REVIEWER));
         return roles;
     }
 
