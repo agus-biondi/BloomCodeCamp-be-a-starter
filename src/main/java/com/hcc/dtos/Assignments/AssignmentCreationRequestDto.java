@@ -31,4 +31,13 @@ public class AssignmentCreationRequestDto {
     public void setBranch(String branch) {
         this.branch = branch;
     }
+
+    @Override
+    public String toString() {
+        return "AssignmentCreationRequestDto{" +
+                "number='" + number + '\'' +
+                ", githubUrl='" + githubUrl + '\'' +
+                ", branch='" + branch + '\'' +
+                '}';
+    }
 }

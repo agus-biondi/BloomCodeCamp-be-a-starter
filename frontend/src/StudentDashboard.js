@@ -15,7 +15,7 @@ const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0;  // Adjusted padding based on the logo's size
+  padding: 10px 10px;
   box-shadow: 2px 0 5px rgba(0,0,0,0.2);
 `;
 
@@ -30,12 +30,26 @@ const SidebarButton = styled.button`
   cursor: pointer;
   margin: 15px 0;
   transition: 0.3s;
-
   &:hover {
     color: #FBCF75;
     transform: scale(1.1);
   }
 `;
+
+
+const ImportantSidebarButton = styled(SidebarButton)`
+  background-color: transparent;
+  border: 2px solid #FBCF75;
+  padding: 5px 10px;
+  box-shadow: 0px 0px 8px 2px rgba(255,167,38,0.6);
+  border-radius: 16px;
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 12px 4px rgba(255,167,38,0.7);
+    border-radius: 8px;
+  }
+`;
+
 
 const LogoImage = styled.img`
   width: 175px;
@@ -52,8 +66,8 @@ const Page = styled.div`
 `;
 
 const MainContent = styled.div`
-  width: calc(100% - 200px);  // This subtracts the sidebar width
-  margin-left: 200px;        // This pushes the main content to the right of the sidebar
+  width: calc(100% - 200px);
+  margin-left: 200px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -101,25 +115,6 @@ const AssignmentCard = styled.div`
   cursor: pointer;
 `;
 
-const CardHeader = styled.div`
-  flex: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #3a3b3c;
-  &:hover {
-    background-color: #343536;
-  }
-`;
-
-const CardFooter = styled.div`
-  flex: 1;
-  background-color: #242526;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
 const CardIcon = styled(FontAwesomeIcon)`
   color: #FBCF75;
   font-size: 3em;
@@ -129,44 +124,6 @@ const CardText = styled.p`
   text-transform: capitalize;
   text-align: center;
   color: #FBCF75;
-`;
-
-const LogoutButton = styled.button`
-  width: 150px;
-  height: 50px;
-  background-color: #023D36;
-  color: #FBCF75;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #FBCF75;
-    color: #023D36;
-  }
-`;
-
-const HomeButton = styled.button`
-  width: 150px;
-  height: 50px;
-  background-color: #023D36;
-  color: #FBCF75;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 10px;
-
-  &:hover {
-    background-color: #FBCF75;
-    color: #023D36;
-  }
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
 `;
 
 const PlaceholderText = styled.p`
@@ -183,14 +140,18 @@ const CreateAssignmentCard = styled(AssignmentCard)`
   align-items: center;
 `;
 
-const PlusIcon = styled(FontAwesomeIcon)`
-  color: #FBCF75;
-  font-size: 3em;
+const ModalContent = styled.div`
+  width: 80%;
+  max-width: 500px;
+  padding: 20px;
+  background-color: #3a3b3c;
+  border: 1px solid #023D36;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1001;
+  color: #023D36;
 `;
-
-const handleCreateAssignment = () => {
-
-};
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -205,30 +166,73 @@ const ModalOverlay = styled.div`
   z-index: 1000;
 `;
 
-const ModalContent = styled.div`
-  width: 80%;
-  max-width: 500px;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1001;
+const ModalStyledForm = styled.form`
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+`;
+
+const ModalStyledLabel = styled.label`
+    color: #FBCF75;
+`;
+
+const ModalStyledInput = styled.input`
+    padding: 10px;
+    border: 1px solid #023D36;
+    border-radius: 5px;
+    &:focus {
+        outline: none;
+        border-color: #FBCF75;
+    }
+`;
+
+const ModalStyledSelect = styled.select`
+    padding: 10px;
+    font-size: 1em;
+    border: 1px solid #023D36;
+    border-radius: 5px;
+    &:focus {
+        outline: none;
+        border-color: #FBCF75;
+    }
+`;
+
+const ModalStyledButton = styled.button`
+    padding: 10px 20px;
+    background-color: #023D36;
+    color: #FBCF75;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+    &:hover {
+        background-color: #FBCF75;
+        color: #023D36;
+    }
 `;
 
 const StudentDashboard = () => {
-  const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [assignments, setAssignments] = useState({
+    const token = localStorage.getItem("jwt");
+    const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [assignments, setAssignments] = useState({
           rejected: [],
           inReview: [],
           completed: []
       });
+    const [githubUrl, setGithubUrl] = useState('');
+    const [branch, setBranch] = useState('');
+    const [assignmentNumber, setAssignmentNumber] = useState('');
+    const [errorMessage, setErrorMessage] = useState(null);
 
 
     useEffect(() => {
-        axios.get('http://localhost:8080/api/assignments')
-            .then(response => {
+        axios.get('http://localhost:8080/api/assignments/', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+          })
+          .then(response => {
                 if (response.data.success) {
                     const fetchedAssignments = response.data.data;
 
@@ -247,6 +251,38 @@ const StudentDashboard = () => {
     }, []);
 
 
+const handleCreateAssignment = (e) => {
+  e.preventDefault();
+
+    const payload = {
+        number: assignmentNumber,
+        githubUrl: githubUrl,
+        branch: branch
+    };
+
+    axios.post('http://localhost:8080/api/assignments/', payload, {
+          headers: {
+              'Authorization': `Bearer ${token}`
+          }
+    })
+    .then(response => {
+      if (response.data.success) {
+
+        setGithubUrl('');
+        setBranch('');
+        setAssignmentNumber('');
+        setIsModalOpen(false);
+      } else {
+        setErrorMessage(response.data.message);
+      }
+    })
+    .catch(error => {
+      console.error("Error submitting assignment:", error);
+      setErrorMessage("An error occurred. Please try again.");
+    });
+};
+
+
     const handleLogout = () => {
         localStorage.removeItem('jwt');
         navigate('/login');
@@ -261,13 +297,13 @@ const StudentDashboard = () => {
      <Sidebar>
          <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
 
+         <ImportantSidebarButton onClick={() => setIsModalOpen(true)}>
+           <FontAwesomeIcon icon={faPlus} />
+           New Assignment
+         </ImportantSidebarButton>
          <SidebarButton onClick={handleHomeClick}>
            <FontAwesomeIcon icon={faHome} />
            Home
-         </SidebarButton>
-         <SidebarButton onClick={() => setIsModalOpen(true)}>
-           <FontAwesomeIcon icon={faPlus} />
-           New Assignment
          </SidebarButton>
          <SidebarButton onClick={handleLogout}>
            <FontAwesomeIcon icon={faSignOutAlt} />
@@ -275,13 +311,49 @@ const StudentDashboard = () => {
          </SidebarButton>
      </Sidebar>
 
-      {isModalOpen && (
-        <ModalOverlay onClick={() => setIsModalOpen(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            {/* Modal content goes here */}
-          </ModalContent>
-        </ModalOverlay>
-      )}
+     {isModalOpen && (
+         <ModalOverlay onClick={() => setIsModalOpen(false)}>
+             <ModalContent onClick={(e) => e.stopPropagation()}>
+                 <ModalStyledForm onSubmit={handleCreateAssignment}>
+                     <div>
+                         <ModalStyledLabel>Assignment Number:</ModalStyledLabel>
+                         <ModalStyledSelect
+                             value={assignmentNumber}
+                             onChange={(e) => setAssignmentNumber(e.target.value)}
+                             required
+                         >
+                             <option value="">Select an assignment</option>
+                             <option value="1">Assignment 1</option>
+                             <option value="2">Assignment 2</option>
+                             <option value="3">Assignment 3</option>
+                             {/* Add more options as needed */}
+                         </ModalStyledSelect>
+                     </div>
+                     <div>
+                         <ModalStyledLabel>Github URL:</ModalStyledLabel>
+                         <ModalStyledInput
+                             type="url"
+                             value={githubUrl}
+                             onChange={(e) => setGithubUrl(e.target.value)}
+                             required
+                         />
+                     </div>
+                     <div>
+                         <ModalStyledLabel>Branch:</ModalStyledLabel>
+                         <ModalStyledInput
+                             type="text"
+                             value={branch}
+                             onChange={(e) => setBranch(e.target.value)}
+                             required
+                         />
+                     </div>
+                     <ModalStyledButton type="submit">Submit</ModalStyledButton>
+                 </ModalStyledForm>
+             </ModalContent>
+         </ModalOverlay>
+     )}
+
+
       <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
       <MainContent>
 

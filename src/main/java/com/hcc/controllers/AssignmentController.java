@@ -4,6 +4,7 @@ import com.hcc.dtos.ApiResponse;
 import com.hcc.dtos.Assignments.AssignmentCreationRequestDto;
 import com.hcc.dtos.Assignments.AssignmentResponseDto;
 import com.hcc.dtos.Assignments.AssignmentUpdateRequestDto;
+import com.hcc.dtos.Assignments.GetAssignmentsRequestDto;
 import com.hcc.entities.Assignment;
 import com.hcc.entities.Authority;
 import com.hcc.entities.User;
@@ -15,6 +16,8 @@ import com.hcc.services.AssignmentService;
 import com.hcc.services.UserService;
 import com.hcc.utils.AssignmentMapper;
 import org.apache.coyote.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +43,19 @@ public class AssignmentController {
 
     Map<AuthorityEnum, List<AssignmentStatusEnum>> validStatusChangesForRoleMap;
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
+
 
     @GetMapping("/")
     public ResponseEntity<ApiResponse> getAssignmentsByUser(
+            @RequestParam(name = "type", required = false) String type,
             @AuthenticationPrincipal User user) {
         ApiResponse response = new ApiResponse();
         List<Assignment> assignments;
 
-        boolean isReviewer = user.getAuthorities().stream()
+        logger.info("get assignment by user");
+        boolean isReviewer = type != null && type.equals("reviewer") &&
+            user.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals(AuthorityEnum.ROLE_REVIEWER.name()));
 
         if (isReviewer) {
@@ -161,7 +169,7 @@ public class AssignmentController {
     public ResponseEntity<ApiResponse> createAssignment(
             @RequestBody AssignmentCreationRequestDto requestDto,
             @AuthenticationPrincipal User user) {
-
+        logger.info(requestDto.toString());
         ApiResponse response = new ApiResponse();
 
         if (requestDto.getBranch().isEmpty() || requestDto.getBranch().isBlank()) {
@@ -202,7 +210,7 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
-        assignment.setStatus(AssignmentStatusEnum.NOT_SUBMITTED);
+        assignment.setStatus(AssignmentStatusEnum.SUBMITTED);
 
         try {
             Assignment savedAssignment = assignmentService.createAssignment(assignment);

@@ -26,7 +26,6 @@ public class AssignmentMapper {
         AssignmentResponseDto dto = new AssignmentResponseDto();
         dto.setId(assignment.getId());
         dto.setStatus(assignment.getStatus().name());
-        dto.setUser(assignment.getUser());
         return dto;
     }
 }

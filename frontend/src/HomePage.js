@@ -30,7 +30,7 @@ const Sidebar = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 0;  // Adjusted padding based on the logo's size
+  padding: 10px 0;
   box-shadow: 2px 0 5px rgba(0,0,0,0.2);
 `;
 
@@ -53,8 +53,8 @@ const SidebarButton = styled.button`
 `;
 
 const MainContent = styled.div`
-  width: calc(100% - 200px);  // This subtracts the sidebar width
-  margin-left: 200px;        // This pushes the main content to the right of the sidebar
+  width: calc(100% - 200px);
+  margin-left: 200px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -118,21 +118,6 @@ const CardText = styled.p`
   text-align: center;
   color: #FBCF75;
   font-weight: bold;
-`;
-
-const LogoutButton = styled.button`
-  width: 150px;
-  height: 50px;
-  background-color: #023D36;
-  color: #FBCF75;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #FBCF75;
-    color: #023D36;
-  }
 `;
 
 const CardContainer = styled.div`

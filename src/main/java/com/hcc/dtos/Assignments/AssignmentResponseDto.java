@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 public class AssignmentResponseDto {
     private Long id;
     private String status;
-    private User user;
 
     public Long getId() {
         return id;
@@ -15,10 +14,6 @@ public class AssignmentResponseDto {
 
     public String getStatus() {
         return status;
-    }
-
-    public User getUser() {
-        return user;
     }
 
     public void setId(Long id) {
@@ -29,9 +24,6 @@ public class AssignmentResponseDto {
         this.status = status;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
 }
 
 

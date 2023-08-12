@@ -32,7 +32,7 @@ public class RepositoriesInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        clearRepos();
+        //clearRepos();
 
         if (userRepo.count() != 0 || assignmentRepo.count() != 0 || authorityRepo.count() != 0) {
             return;
@@ -48,9 +48,9 @@ public class RepositoriesInitializer implements CommandLineRunner {
 
     private void clearRepos() {
 
-        userRepo.deleteAll();
         authorityRepo.deleteAll();
         assignmentRepo.deleteAll();
+        userRepo.deleteAll();
 
     }
 
