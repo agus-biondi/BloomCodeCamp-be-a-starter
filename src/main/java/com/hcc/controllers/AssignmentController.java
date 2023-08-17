@@ -1,12 +1,11 @@
 package com.hcc.controllers;
 
 import com.hcc.dtos.ApiResponse;
+import com.hcc.dtos.Assignments.AllAssignmentsResponseDto;
 import com.hcc.dtos.Assignments.AssignmentCreationRequestDto;
 import com.hcc.dtos.Assignments.AssignmentResponseDto;
 import com.hcc.dtos.Assignments.AssignmentUpdateRequestDto;
-import com.hcc.dtos.Assignments.GetAssignmentsRequestDto;
 import com.hcc.entities.Assignment;
-import com.hcc.entities.Authority;
 import com.hcc.entities.User;
 import com.hcc.enums.AssignmentEnum;
 import com.hcc.enums.AssignmentStatusEnum;
@@ -15,18 +14,17 @@ import com.hcc.exceptions.ResourceNotFoundException;
 import com.hcc.services.AssignmentService;
 import com.hcc.services.UserService;
 import com.hcc.utils.AssignmentMapper;
-import org.apache.coyote.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -46,12 +44,16 @@ public class AssignmentController {
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
 
+
     @GetMapping("/")
     public ResponseEntity<ApiResponse> getAssignmentsByUser(
             @RequestParam(name = "type", required = false) String type,
             @AuthenticationPrincipal User user) {
         ApiResponse response = new ApiResponse();
+        AllAssignmentsResponseDto dto = new AllAssignmentsResponseDto();
+
         List<Assignment> assignments;
+        List<AssignmentEnum> unsubmittedAssginments = null;
 
         logger.info("get assignment by user");
         boolean isReviewer = type != null && type.equals("reviewer") &&
@@ -59,13 +61,22 @@ public class AssignmentController {
                 .anyMatch(authority -> authority.getAuthority().equals(AuthorityEnum.ROLE_REVIEWER.name()));
 
         if (isReviewer) {
-            assignments = assignmentService.getAssignmentsByCodeReviewer(user);
+            assignments = assignmentService.getAssignmentByCodeReviewerOrNoReviewer(user);
+            logger.info("this is a reviewer");
         } else {
             assignments = assignmentService.getAssignmentsByUser(user);
+            unsubmittedAssginments = Arrays.asList(AssignmentEnum.values())
+                    .stream()
+                    .filter(ua -> !assignments.stream()
+                            .anyMatch(a -> a.getNumber().equals(ua)))
+                    .collect(Collectors.toList());
         }
 
         response.setSuccess(true);
-        response.setData(assignments);
+
+        dto.setAssignments(assignments);
+        dto.setUnsubmittedAssignments(unsubmittedAssginments);
+        response.setData(dto);
         return ResponseEntity.ok(response);
     }
 

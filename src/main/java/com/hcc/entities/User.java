@@ -1,5 +1,6 @@
 package com.hcc.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hcc.enums.AuthorityEnum;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +26,7 @@ public class User implements UserDetails {
     private String username;
 
     @Column(name = "password")
+    @JsonIgnore
     private String password;
 
     public User() {

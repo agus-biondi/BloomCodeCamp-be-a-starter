@@ -19,4 +19,7 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
 
     List<Assignment> findByCodeReviewer(User user);
 
+    List<Assignment> findByCodeReviewerOrCodeReviewerIsNull(User codeReviewer);
+
+
 }

@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -115,6 +117,22 @@ const AssignmentCard = styled.div`
   cursor: pointer;
 `;
 
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #3a3b3c;
+`;
+
+const CardIconWrapper = styled.div`
+  flex-grow: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #023D36;
+`;
+
 const CardIcon = styled(FontAwesomeIcon)`
   color: #FBCF75;
   font-size: 3em;
@@ -211,6 +229,44 @@ const ModalStyledButton = styled.button`
     }
 `;
 
+const AssignmentDisplaySection = ({ header, assignmentsList, icon }) => (
+  <AssignmentSection>
+    <SectionHeader>{header}</SectionHeader>
+    <CardsContainer>
+      {assignmentsList.length > 0 ? (
+        assignmentsList.map((assignment, idx) => (
+          <AssignmentCard key={idx}>
+              <CardIconWrapper>
+                <CardIcon icon={icon} />
+              </CardIconWrapper>
+              <AssignmentNumberSection>
+                  {assignment.title || assignment.number}
+              </AssignmentNumberSection>
+          </AssignmentCard>
+        ))
+      ) : (
+        <PlaceholderText>No {header.toLowerCase()} at the moment.</PlaceholderText>
+      )}
+    </CardsContainer>
+  </AssignmentSection>
+);
+
+
+const AssignmentNumberSection = styled.div`
+  flex: 1;
+  background-color: #242526;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+    text-transform: capitalize;
+    text-align: center;
+    color: #FBCF75;
+    font-weight: bold;
+`;
+
+
+
 const StudentDashboard = () => {
     const token = localStorage.getItem("jwt");
     const navigate = useNavigate();
@@ -221,10 +277,10 @@ const StudentDashboard = () => {
           completed: []
       });
     const [githubUrl, setGithubUrl] = useState('');
+    const [unSubmittedAssignments, setUnSubmittedAssignments] = useState('');
     const [branch, setBranch] = useState('');
     const [assignmentNumber, setAssignmentNumber] = useState('');
     const [errorMessage, setErrorMessage] = useState(null);
-
 
     useEffect(() => {
         axios.get('http://localhost:8080/api/assignments/', {
@@ -234,7 +290,7 @@ const StudentDashboard = () => {
           })
           .then(response => {
                 if (response.data.success) {
-                    const fetchedAssignments = response.data.data;
+                    const fetchedAssignments = response.data.data.assignments;
 
                     setAssignments({
                         rejected: fetchedAssignments.filter(assignment => assignment.status === 'REJECTED'),
@@ -243,6 +299,9 @@ const StudentDashboard = () => {
                         ),
                         completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
                     });
+
+                    const unsubmitted = response.data.data.unsubmittedAssignments;
+                    setUnSubmittedAssignments(unsubmitted);
                 }
             })
             .catch(error => {
@@ -320,13 +379,15 @@ const handleCreateAssignment = (e) => {
                          <ModalStyledSelect
                              value={assignmentNumber}
                              onChange={(e) => setAssignmentNumber(e.target.value)}
-                             required
-                         >
+                             required>
+
                              <option value="">Select an assignment</option>
-                             <option value="1">Assignment 1</option>
-                             <option value="2">Assignment 2</option>
-                             <option value="3">Assignment 3</option>
-                             {/* Add more options as needed */}
+                             {
+                                 unSubmittedAssignments.map((assignment, index) => (
+                                     <option key={index} value={assignment}>Assignment {assignment.replace("ASSIGNMENT_", "")}</option>
+                                 ))
+                             }
+
                          </ModalStyledSelect>
                      </div>
                      <div>
@@ -357,51 +418,25 @@ const handleCreateAssignment = (e) => {
       <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
       <MainContent>
 
-        <AssignmentSection>
-          <SectionHeader>Rejected Assignments</SectionHeader>
-              <CardsContainer>
-                {assignments.rejected.length > 0 ? (
-                  assignments.rejected.map((assignment, idx) => (
-                    <AssignmentCard key={idx}>
-                      <CardIcon icon={faTimesCircle} />
-                      <CardText>{assignment.title}</CardText>
-                    </AssignmentCard>
-                  ))
-                ) : (
-                  <PlaceholderText>No rejected assignments at the moment.</PlaceholderText>
-                )}
-              </CardsContainer>
-        </AssignmentSection>
-        <AssignmentSection>
-          <SectionHeader>Assignments In Review</SectionHeader>
-            <CardsContainer>
-              {assignments.inReview.length > 0 ? (
-                assignments.inReview.map((assignment, idx) => (
-                  <AssignmentCard key={idx}>
-                    <CardIcon icon={faSpinner} />
-                    <CardText>{assignment.title}</CardText>
-                  </AssignmentCard>
-                ))
-              ) : (
-                <PlaceholderText>No assignments in review at the moment.</PlaceholderText>
-              )}
-            </CardsContainer>
-        </AssignmentSection>
-        <AssignmentSection>
-          <SectionHeader>Completed Assignments</SectionHeader>
-          <CardsContainer>
-            {assignments.completed.length > 0 ? (
-              assignments.completed.map((assignment, idx) => (
-                <AssignmentCard key={idx}>
-                  <CardIcon icon={faCheckCircle} />
-                  <CardText>{assignment.title}</CardText>
-                </AssignmentCard>
-              ))
-            ) : (
-              <PlaceholderText>No assignments completed at the moment.</PlaceholderText>
-            )}
-          </CardsContainer>
-        </AssignmentSection>
+        <AssignmentDisplaySection
+          header="Rejected Assignments"
+          assignmentsList={assignments.rejected}
+          icon={faTimesCircle}
+        />
+
+        <AssignmentDisplaySection
+          header="Assignments In Review"
+          assignmentsList={assignments.inReview}
+          icon={faSpinner}
+        />
+
+        <AssignmentDisplaySection
+          header="Completed Assignments"
+          assignmentsList={assignments.completed}
+          icon={faCheckCircle}
+        />
+
+
       </MainContent>
     </Page>
   );

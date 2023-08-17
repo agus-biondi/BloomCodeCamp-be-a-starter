@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import LoginPage from './LoginForm';
 import HomePage from './HomePage';
 import StudentDashboard from './StudentDashboard';
+import ReviewerDashboard from './ReviewerDashboard';
 import axios from 'axios';
 import { createGlobalStyle } from 'styled-components';
 
@@ -23,7 +24,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/homepage" element={<HomePage />} />
-        <Route path="/reviewer_dashboard" element={<HomePage />} />
+        <Route path="/reviewer_dashboard" element={<ReviewerDashboard />} />
         <Route path="/student_dashboard" element={<StudentDashboard />} />
         <Route path="*" element={<LoginRedirect />} />
       </Routes>

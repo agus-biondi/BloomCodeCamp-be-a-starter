@@ -25,6 +25,11 @@ public class AssignmentService {
         return assignmentRepository.findByCodeReviewer(reviewer);
     }
 
+    public List<Assignment> getAssignmentByCodeReviewerOrNoReviewer(User reviewer) {
+        return assignmentRepository.findByCodeReviewerOrCodeReviewerIsNull(reviewer);
+    }
+
+
     public boolean doesUserHaveAssignment(User user, AssignmentEnum assignmentNumber) {
         return assignmentRepository.findByUserAndNumber(user, assignmentNumber).isPresent();
     }
