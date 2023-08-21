@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faHome, faSignOutAlt, faTimesCircle, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faUserCircle, faPlus, faHome, faSignOutAlt, faTimesCircle, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 
 const Sidebar = styled.div`
   position: fixed;
@@ -115,6 +116,7 @@ const AssignmentCard = styled.div`
   overflow: hidden;
   transition: transform 0.3s;
   cursor: pointer;
+  justify-content: space-between;
 `;
 
 const CardHeader = styled.div`
@@ -146,6 +148,17 @@ const CardText = styled.p`
 
 const PlaceholderText = styled.p`
   color: #FBCF75;
+`;
+
+const UsernameDisplay = styled.div`
+  background-color: #FBCF75;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  margin: 10px auto;
+  padding: 5px 15px;
+  border-radius: 20px;
+  transition: 0.3s;
 `;
 
 const CreateAssignmentCard = styled(AssignmentCard)`
@@ -259,17 +272,16 @@ const AssignmentNumberSection = styled.div`
   justify-content: center;
   align-items: center;
   padding: 10px;
-    text-transform: capitalize;
-    text-align: center;
-    color: #FBCF75;
-    font-weight: bold;
+  text-transform: capitalize;
+  text-align: center;
+  color: #FBCF75;
+  font-weight: bold;
 `;
-
-
 
 const StudentDashboard = () => {
     const token = localStorage.getItem("jwt");
     const navigate = useNavigate();
+    const [username, setUsername] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [assignments, setAssignments] = useState({
           rejected: [],
@@ -277,37 +289,52 @@ const StudentDashboard = () => {
           completed: []
       });
     const [githubUrl, setGithubUrl] = useState('');
-    const [unSubmittedAssignments, setUnSubmittedAssignments] = useState('');
+    const [unSubmittedAssignments, setUnSubmittedAssignments] = useState([]);
     const [branch, setBranch] = useState('');
     const [assignmentNumber, setAssignmentNumber] = useState('');
     const [errorMessage, setErrorMessage] = useState(null);
 
     useEffect(() => {
-        axios.get('http://localhost:8080/api/assignments/', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-          })
-          .then(response => {
-                if (response.data.success) {
-                    const fetchedAssignments = response.data.data.assignments;
-
-                    setAssignments({
-                        rejected: fetchedAssignments.filter(assignment => assignment.status === 'REJECTED'),
-                        inReview: fetchedAssignments.filter(assignment =>
-                            ['SUBMITTED', 'CLAIMED', 'RESUBMITTED', 'RECLAIMED'].includes(assignment.status)
-                        ),
-                        completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
-                    });
-
-                    const unsubmitted = response.data.data.unsubmittedAssignments;
-                    setUnSubmittedAssignments(unsubmitted);
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching assignments:", error);
-            });
+        fetchAssignments();
     }, []);
+
+    useEffect(() => {
+
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      const roles = decodedToken.scopes.map(scope => scope.authority);
+      setUsername(decodedToken.sub || '');
+    } else {
+      navigate('/login');
+    }
+    }, [navigate]);
+
+const fetchAssignments = () => {
+    axios.get('http://localhost:8080/api/assignments/', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => {
+        if (response.data.success) {
+            const fetchedAssignments = response.data.data.assignments;
+
+            setAssignments({
+                rejected: fetchedAssignments.filter(assignment => assignment.status === 'REJECTED'),
+                inReview: fetchedAssignments.filter(assignment =>
+                    ['SUBMITTED', 'CLAIMED', 'RESUBMITTED', 'RECLAIMED'].includes(assignment.status)
+                ),
+                completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
+            });
+
+            const unsubmitted = response.data.data.unsubmittedAssignments;
+            setUnSubmittedAssignments(unsubmitted);
+        }
+    })
+    .catch(error => {
+        console.error("Error fetching assignments:", error);
+    });
+}
 
 
 const handleCreateAssignment = (e) => {
@@ -331,6 +358,8 @@ const handleCreateAssignment = (e) => {
         setBranch('');
         setAssignmentNumber('');
         setIsModalOpen(false);
+
+        fetchAssignments(); //refresh assignments
       } else {
         setErrorMessage(response.data.message);
       }
@@ -355,7 +384,9 @@ const handleCreateAssignment = (e) => {
     <Page>
      <Sidebar>
          <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
-
+           <UsernameDisplay>
+                <FontAwesomeIcon icon={faUserCircle} />&nbsp;{username}
+           </UsernameDisplay>
          <ImportantSidebarButton onClick={() => setIsModalOpen(true)}>
            <FontAwesomeIcon icon={faPlus} />
            New Assignment

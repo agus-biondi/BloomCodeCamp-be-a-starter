@@ -6,10 +6,12 @@ import {
     faSignOutAlt,
     faSpinner,
     faCheckCircle,
-    faClipboardList
+    faClipboardList,
+    faUserCircle
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import jwtDecode from 'jwt-decode';
 
 
 const Sidebar = styled.div`
@@ -98,6 +100,14 @@ const AssignmentSection = styled.div`
   margin: 10px 0;
 `;
 
+const CardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+`;
+
+
 const SectionHeader = styled.h1`
   color: #FBCF75;
   margin-bottom: 10px;
@@ -120,6 +130,8 @@ const AssignmentCard = styled.div`
   overflow: hidden;
   transition: transform 0.3s;
   cursor: pointer;
+
+  justify-content: space-between;
 `;
 
 const CardHeader = styled.div`
@@ -234,48 +246,109 @@ const ModalStyledButton = styled.button`
     }
 `;
 
+const UsernameDisplay = styled.div`
+  background-color: #FBCF75;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  margin: 10px auto;
+  padding: 5px 15px;
+  border-radius: 20px;
+  transition: 0.3s;
+`;
+
 const UserDetails = styled.div`
-  //background-color: #3a3b3c;
-  //color: #FBCF75;
     background-color: #FBCF75;
     border: none;
     font-size: 0.8em;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 15px 0;
+    margin: 10px auto;
     padding: 5px 6px;
     border-radius: 20px;
     align-self: flex-start;
   `;
 
-const AssignmentDisplaySection = ({ header, assignmentsList, icon }) => (
+const ClaimButton = styled.button`
+  background-color: #023D36;
+  color: #FBCF75;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    background-color: #FBCF75;
+    color: #023D36;
+  }
+`;
+
+const AssignmentDisplaySection = ({ header, assignmentsList, icon, setCurrentAssignment, setReviewModalOpen }) => {
+    const claimAssignment = (id) => {
+        const updateData = {
+            status: "CLAIMED",
+            updateAssignmentAsRole: "ROLE_REVIEWER"
+        };
+
+        axios.put(`http://localhost:8080/api/assignments/${id}`, updateData, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem("jwt")}`
+            },
+        })
+        .then(response => {
+            if (response.data.success) {
+                console.log("Successfully claimed assignment!");
+            } else {
+                console.error(response.data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error claiming assignment:", error);
+        });
+    };
+
+    return (
   <AssignmentSection>
     <SectionHeader>{header}</SectionHeader>
     <CardsContainer>
       {assignmentsList.length > 0 ? (
         assignmentsList.map((assignment, idx) => (
-          <AssignmentCard key={idx}>
-          <UserDetails>{assignment.user.username}</UserDetails>
+          <CardContainer key={idx}>
+            <AssignmentCard>
+              <UserDetails>{assignment.user.username}</UserDetails>
               <CardIconWrapper>
                 <CardIcon icon={icon} />
               </CardIconWrapper>
-
               <AssignmentNumberSection>
-                  {assignment.title || assignment.number}
+                {assignment.title || assignment.number}
               </AssignmentNumberSection>
+            </AssignmentCard>
+            {header === "Submitted for Review and Resubmitted" &&
+                <ClaimButton onClick={() => claimAssignment(assignment.id)}>
+                    Claim
+                </ClaimButton>}
 
-              <SidebarButton>
-                  Review
-              </SidebarButton>
-          </AssignmentCard>
+            {header === "In Review" &&
+              <ClaimButton onClick={() => {
+                setCurrentAssignment(assignment);
+                setReviewModalOpen(true);
+              }}>
+                Review
+              </ClaimButton>}
+
+          </CardContainer>
         ))
       ) : (
         <PlaceholderText>No {header.toLowerCase()} at the moment.</PlaceholderText>
       )}
     </CardsContainer>
   </AssignmentSection>
-);
+    );
+};
+
 
 
 const AssignmentNumberSection = styled.div`
@@ -291,16 +364,74 @@ const AssignmentNumberSection = styled.div`
     font-weight: bold;
 `;
 
+const ReviewModal = ({ isOpen, assignment, onClose }) => {
+  const [reviewVideoURL, setReviewVideoURL] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleApprove = () => {
+
+    onClose();
+  };
+
+  const handleReject = () => {
+
+    onClose();
+  };
+
+  return (
+    <ModalOverlay>
+      <ModalContent>
+        <ModalStyledLabel>Github URL: </ModalStyledLabel>
+        <a href={assignment.githubURL} target="_blank" rel="noopener noreferrer">{assignment.githubURL}</a>
+        <ModalStyledLabel>Branch: </ModalStyledLabel>
+        <p>{assignment.branch}</p>
+        <ModalStyledForm>
+          <ModalStyledLabel>Review Video URL:</ModalStyledLabel>
+          <ModalStyledInput
+            type="text"
+            value={reviewVideoURL}
+            onChange={(e) => setReviewVideoURL(e.target.value)}
+          />
+          <div>
+            <ModalStyledButton onClick={handleApprove}>Approve</ModalStyledButton>
+            <ModalStyledButton onClick={handleReject}>Reject</ModalStyledButton>
+          </div>
+        </ModalStyledForm>
+      </ModalContent>
+    </ModalOverlay>
+  );
+};
+
+
+
 const ReviewerDashboard = () => {
     const token = localStorage.getItem("jwt");
     const navigate = useNavigate();
+    const [username, setUsername] = useState('');
     const [assignments, setAssignments] = useState({
         inReview: [],
         submittedResubmitted: [],
         completed: []
     });
+    const [isReviewModalOpen, setReviewModalOpen] = useState(false);
+    const [currentAssignment, setCurrentAssignment] = useState(null);
+
+
 
     useEffect(() => {
+
+    if (token) {
+      const decodedToken = jwtDecode(token);
+      const roles = decodedToken.scopes.map(scope => scope.authority);
+      setUsername(decodedToken.sub || '');
+    } else {
+      navigate('/login');
+    }
+    }, [navigate]);
+
+    useEffect(() => {
+
         axios.get('http://localhost:8080/api/assignments/', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -342,6 +473,9 @@ const ReviewerDashboard = () => {
         <Page>
             <Sidebar>
                 <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+               <UsernameDisplay>
+                    <FontAwesomeIcon icon={faUserCircle} />&nbsp;{username}
+               </UsernameDisplay>
                 <SidebarButton onClick={handleHomeClick}>
                     <FontAwesomeIcon icon={faHome} />
                     Home
@@ -352,6 +486,19 @@ const ReviewerDashboard = () => {
                 </SidebarButton>
             </Sidebar>
 
+            {isReviewModalOpen && (
+                            <ModalOverlay>
+                                <ModalContent>
+                                    <ModalStyledForm>
+                                        <ModalStyledLabel>Your Label:</ModalStyledLabel>
+                                        <ModalStyledInput type="text" placeholder="Your input..." />
+                                        <ModalStyledButton>Submit</ModalStyledButton>
+                                    </ModalStyledForm>
+                                    <ModalStyledButton onClick={() => setReviewModalOpen(false)}>Close Modal</ModalStyledButton>
+                                </ModalContent>
+                            </ModalOverlay>
+                        )}
+
             <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
             <MainContent>
 
@@ -359,6 +506,8 @@ const ReviewerDashboard = () => {
                     header="In Review"
                     assignmentsList={assignments.inReview}
                     icon={faSpinner}
+                    setCurrentAssignment={setCurrentAssignment}
+                    setReviewModalOpen={setReviewModalOpen}
                 />
 
                 <AssignmentDisplaySection

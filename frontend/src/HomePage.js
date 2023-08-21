@@ -3,13 +3,14 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBug, faFolderOpen, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUserCircle, faBug, faFolderOpen, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
 
 const LogoImage = styled.img`
   width: 175px;
   margin-bottom: 20px;
 `;
+
 
 const Page = styled.div`
   min-height: 100vh;
@@ -50,6 +51,17 @@ const SidebarButton = styled.button`
     color: #FBCF75;
     transform: scale(1.1);
   }
+`;
+
+const UsernameDisplay = styled.div`
+  background-color: #FBCF75;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  margin: 10px auto;
+  padding: 5px 15px;
+  border-radius: 20px;
+  transition: 0.3s;
 `;
 
 const MainContent = styled.div`
@@ -133,6 +145,7 @@ const CardContainer = styled.div`
 const HomePage = () => {
   const navigate = useNavigate();
   const [roles, setRoles] = useState([]);
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
@@ -140,6 +153,7 @@ const HomePage = () => {
     if (token) {
       const decodedToken = jwtDecode(token);
       const roles = decodedToken.scopes.map(scope => scope.authority);
+      setUsername(decodedToken.sub || '');
       setRoles(roles);
     } else {
       navigate('/login');
@@ -158,11 +172,14 @@ return (
 
       <Sidebar>
                <LogoImage src="images/bloom_icon_no_bg.png" alt="Bloom Logo" />
+               <UsernameDisplay>
+                    <FontAwesomeIcon icon={faUserCircle} />&nbsp;{username}
+               </UsernameDisplay>
                <SidebarButton onClick={handleLogout}>
                  <FontAwesomeIcon icon={faSignOutAlt} />
                  Logout
                </SidebarButton>
-           </Sidebar>
+       </Sidebar>
 
       <MainContent>
         <CardContainer>

@@ -39,10 +39,12 @@ public class RepositoriesInitializer implements CommandLineRunner {
         }
 
         LocalDate date = LocalDate.now();
-        User user1 = new User(date, "student", "{bcrypt}"+customPasswordEncoder.getPasswordEncoder().encode("123"));
+        User user1 = new User(date, "student1", "{bcrypt}"+customPasswordEncoder.getPasswordEncoder().encode("123"));
         User user2 = new User(date, "teacher", "{bcrypt}"+customPasswordEncoder.getPasswordEncoder().encode("123"));
         User user3 = new User(date, "admin", "{bcrypt}"+customPasswordEncoder.getPasswordEncoder().encode("123"));
-        List<User> users = Arrays.asList(user1, user2, user3);
+        User user4 = new User(date, "student2", "{bcrypt}"+customPasswordEncoder.getPasswordEncoder().encode("123"));
+
+        List<User> users = Arrays.asList(user1, user2, user3, user4);
         userRepo.saveAll(users);
     }
 
