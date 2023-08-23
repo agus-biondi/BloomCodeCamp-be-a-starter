@@ -160,10 +160,13 @@ public class AssignmentController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
 
+        if (updateRequest.getUpdateAssignmentAsRole().equals(AuthorityEnum.ROLE_REVIEWER)) {
+            updateRequest.setCodeReviewer(user);
+        }
+
         try {
             Assignment updatedAssignment = assignmentService.updateAssignment(existingAssignment, updateRequest);
             AssignmentResponseDto responseDto = assignmentMapper.toResponseDto(updatedAssignment);
-
             response.setSuccess(true);
             response.setData(responseDto);
             return ResponseEntity.ok(response);

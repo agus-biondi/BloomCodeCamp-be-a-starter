@@ -1,6 +1,7 @@
 package com.hcc.entities;
 
 import com.hcc.enums.AuthorityEnum;
+import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.persistence.*;
@@ -20,6 +21,14 @@ public class Authority implements GrantedAuthority {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public Authority() {
+
+    }
+    public Authority(User user, AuthorityEnum authority) {
+        this.user = user;
+        this.authority = authority;
+    }
 
     public Authority(AuthorityEnum authority) {
         this.authority = authority;

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserCircle, faPlus, faHome, faSignOutAlt, faTimesCircle, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faUserCircle, faPlus, faHome, faSignOutAlt, faTimesCircle, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
@@ -76,7 +76,7 @@ const MainContent = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: -100px;
+  margin-top: 0px;
 `;
 
 const TitleImage = styled.img`
@@ -97,6 +97,7 @@ const AssignmentSection = styled.div`
 const SectionHeader = styled.h1`
   color: #FBCF75;
   margin-bottom: 10px;
+  font-size: 1.5rem;
 `;
 
 const CardsContainer = styled.div`
@@ -107,8 +108,8 @@ const CardsContainer = styled.div`
 `;
 
 const AssignmentCard = styled.div`
-  width: 200px;
-  height: 150px;
+  width: 190px;
+  height: 145px;
   background-color: #023D36;
   display: flex;
   flex-direction: column;
@@ -137,13 +138,30 @@ const CardIconWrapper = styled.div`
 
 const CardIcon = styled(FontAwesomeIcon)`
   color: #FBCF75;
-  font-size: 3em;
+  font-size: 2.8em;
 `;
 
 const CardText = styled.p`
   text-transform: capitalize;
   text-align: center;
   color: #FBCF75;
+`;
+
+const ResubmitButton = styled.button`
+  background-color: #023D36;
+  color: #FBCF75;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+  margin-left: 5px;
+margin-right: 5px;
+  &:hover {
+    background-color: #FBCF75;
+    color: #023D36;
+  }
 `;
 
 const PlaceholderText = styled.p`
@@ -159,6 +177,14 @@ const UsernameDisplay = styled.div`
   padding: 5px 15px;
   border-radius: 20px;
   transition: 0.3s;
+`;
+
+
+const CardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 `;
 
 const CreateAssignmentCard = styled(AssignmentCard)`
@@ -182,6 +208,26 @@ const ModalContent = styled.div`
   position: relative;
   z-index: 1001;
   color: #023D36;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
+const ImportantButtonContainer = styled.div`
+    width: calc(100% - 200px);
+    margin-left: 200px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -50px;
+    z-index: 1000;
+    & > :first-child {
+      margin-right: 15px;
+    }
+
 `;
 
 const ModalOverlay = styled.div`
@@ -242,20 +288,58 @@ const ModalStyledButton = styled.button`
     }
 `;
 
-const AssignmentDisplaySection = ({ header, assignmentsList, icon }) => (
+const RefreshButton = ({fetchAssignments}) => {
+    return (
+        <ImportantSidebarButton onClick={fetchAssignments}>
+            <FontAwesomeIcon icon={faSync} />
+            Refresh
+        </ImportantSidebarButton>
+    );
+};
+
+const AssignmentDisplaySection = ({
+    header,
+    assignmentsList,
+    icon,
+    setCurrentAssignment,
+    setResubmitModalOpen
+}) => (
   <AssignmentSection>
     <SectionHeader>{header}</SectionHeader>
     <CardsContainer>
       {assignmentsList.length > 0 ? (
         assignmentsList.map((assignment, idx) => (
-          <AssignmentCard key={idx}>
+          <CardContainer key={idx}>
+            <AssignmentCard key={idx}>
               <CardIconWrapper>
                 <CardIcon icon={icon} />
               </CardIconWrapper>
               <AssignmentNumberSection>
                   {assignment.title || assignment.number}
               </AssignmentNumberSection>
-          </AssignmentCard>
+            </AssignmentCard>
+            {header === "Rejected Assignments" && (
+              <ButtonContainer>
+                <ResubmitButton onClick={() => {
+                  setCurrentAssignment(assignment);
+                  setResubmitModalOpen(true);
+                }}>
+                  Resubmit
+                </ResubmitButton>
+
+                <ResubmitButton onClick={() => {
+                    if (assignment.reviewVideoUrl) {
+                      window.open(assignment.reviewVideoUrl, '_blank');
+                      console.log(assignment.reviewVideoUrl);
+                    } else {
+                      console.warn("No review video URL provided for this assignment");
+                    }
+                }}>
+                  View Feedback
+                </ResubmitButton>
+              </ButtonContainer>
+            )}
+          </CardContainer>
         ))
       ) : (
         <PlaceholderText>No {header.toLowerCase()} at the moment.</PlaceholderText>
@@ -263,6 +347,8 @@ const AssignmentDisplaySection = ({ header, assignmentsList, icon }) => (
     </CardsContainer>
   </AssignmentSection>
 );
+
+
 
 
 const AssignmentNumberSection = styled.div`
@@ -293,83 +379,114 @@ const StudentDashboard = () => {
     const [branch, setBranch] = useState('');
     const [assignmentNumber, setAssignmentNumber] = useState('');
     const [errorMessage, setErrorMessage] = useState(null);
+    const [isResubmitModalOpen, setResubmitModalOpen] = useState(false);
+    const [currentAssignment, setCurrentAssignment] = useState(null);
 
-    useEffect(() => {
-        fetchAssignments();
-    }, []);
-
-    useEffect(() => {
-
-    if (token) {
-      const decodedToken = jwtDecode(token);
-      const roles = decodedToken.scopes.map(scope => scope.authority);
-      setUsername(decodedToken.sub || '');
-    } else {
-      navigate('/login');
+    const closeResubmitModal = () => {
+        setResubmitModalOpen(false);
     }
+
+    useEffect(() => {
+        if (token) {
+          const decodedToken = jwtDecode(token);
+          const roles = decodedToken.scopes.map(scope => scope.authority);
+          setUsername(decodedToken.sub || '');
+        } else {
+          navigate('/login');
+        }
     }, [navigate]);
 
-const fetchAssignments = () => {
-    axios.get('http://localhost:8080/api/assignments/', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-    .then(response => {
-        if (response.data.success) {
-            const fetchedAssignments = response.data.data.assignments;
+    const fetchAssignments = () => {
+        axios.get('http://localhost:8080/api/assignments/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            if (response.data.success) {
+                const fetchedAssignments = response.data.data.assignments;
 
-            setAssignments({
-                rejected: fetchedAssignments.filter(assignment => assignment.status === 'REJECTED'),
-                inReview: fetchedAssignments.filter(assignment =>
-                    ['SUBMITTED', 'CLAIMED', 'RESUBMITTED', 'RECLAIMED'].includes(assignment.status)
-                ),
-                completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
-            });
+                setAssignments({
+                    rejected: fetchedAssignments.filter(assignment => assignment.status === 'REJECTED'),
+                    inReview: fetchedAssignments.filter(assignment =>
+                        ['SUBMITTED', 'CLAIMED', 'RESUBMITTED', 'RECLAIMED'].includes(assignment.status)
+                    ),
+                    completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
+                });
 
-            const unsubmitted = response.data.data.unsubmittedAssignments;
-            setUnSubmittedAssignments(unsubmitted);
-        }
-    })
-    .catch(error => {
-        console.error("Error fetching assignments:", error);
-    });
-}
+                const unsubmitted = response.data.data.unsubmittedAssignments;
+                setUnSubmittedAssignments(unsubmitted);
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching assignments:", error);
+        });
+    }
 
 
-const handleCreateAssignment = (e) => {
-  e.preventDefault();
+    const handleCreateAssignment = (e) => {
+        e.preventDefault();
 
-    const payload = {
-        number: assignmentNumber,
-        githubUrl: githubUrl,
-        branch: branch
+        const payload = {
+            number: assignmentNumber,
+            githubUrl: githubUrl,
+            branch: branch
+        };
+
+        axios.post('http://localhost:8080/api/assignments/', payload, {
+              headers: {
+                  'Authorization': `Bearer ${token}`
+              }
+        })
+        .then(response => {
+          if (response.data.success) {
+
+            setGithubUrl('');
+            setBranch('');
+            setAssignmentNumber('');
+            setIsModalOpen(false);
+
+            fetchAssignments();
+          } else {
+            setErrorMessage(response.data.message);
+          }
+        })
+        .catch(error => {
+          console.error("Error submitting assignment:", error);
+          setErrorMessage("An error occurred. Please try again.");
+        });
     };
 
-    axios.post('http://localhost:8080/api/assignments/', payload, {
-          headers: {
-              'Authorization': `Bearer ${token}`
-          }
-    })
-    .then(response => {
-      if (response.data.success) {
 
-        setGithubUrl('');
-        setBranch('');
-        setAssignmentNumber('');
-        setIsModalOpen(false);
+    const handleResubmitAssignment = (e) => {
+        e.preventDefault();
+        const updateData = {
+            status: "RESUBMITTED",
+            number: assignmentNumber,
+            githubUrl: githubUrl,
+            branch: branch,
+            updateAssignmentAsRole: "ROLE_STUDENT"
+        };
 
-        fetchAssignments(); //refresh assignments
-      } else {
-        setErrorMessage(response.data.message);
-      }
-    })
-    .catch(error => {
-      console.error("Error submitting assignment:", error);
-      setErrorMessage("An error occurred. Please try again.");
-    });
-};
+        axios.put(`http://localhost:8080/api/assignments/${currentAssignment.id}`, updateData, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem("jwt")}`
+            },
+        })
+        .then(response => {
+            if (response.data.success) {
+                console.log("Successfully completed assignment!");
+            } else {
+                console.error(response.data.message);
+            }
+            fetchAssignments();
+        })
+        .catch(error => {
+            console.error("Error completing assignment:", error);
+        });
 
+        closeResubmitModal();
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('jwt');
@@ -380,6 +497,11 @@ const handleCreateAssignment = (e) => {
         navigate('/homepage');
     };
 
+    useEffect(() => {
+        fetchAssignments();
+    }, []);
+
+
   return (
     <Page>
      <Sidebar>
@@ -387,10 +509,7 @@ const handleCreateAssignment = (e) => {
            <UsernameDisplay>
                 <FontAwesomeIcon icon={faUserCircle} />&nbsp;{username}
            </UsernameDisplay>
-         <ImportantSidebarButton onClick={() => setIsModalOpen(true)}>
-           <FontAwesomeIcon icon={faPlus} />
-           New Assignment
-         </ImportantSidebarButton>
+
          <SidebarButton onClick={handleHomeClick}>
            <FontAwesomeIcon icon={faHome} />
            Home
@@ -400,7 +519,6 @@ const handleCreateAssignment = (e) => {
            Logout
          </SidebarButton>
      </Sidebar>
-
      {isModalOpen && (
          <ModalOverlay onClick={() => setIsModalOpen(false)}>
              <ModalContent onClick={(e) => e.stopPropagation()}>
@@ -446,13 +564,55 @@ const handleCreateAssignment = (e) => {
      )}
 
 
+     {isResubmitModalOpen && (
+       <ModalOverlay onClick={closeResubmitModal}>
+           <ModalContent onClick={(e) => e.stopPropagation()}>
+               <ModalStyledForm onSubmit={handleResubmitAssignment}>
+                   <div>
+                       <ModalStyledLabel>Github URL:</ModalStyledLabel>
+                       <ModalStyledInput
+                           type="url"
+                           value={githubUrl}
+                           onChange={(e) => setGithubUrl(e.target.value)}
+                           required
+                       />
+                   </div>
+                   <div>
+                       <ModalStyledLabel>Branch:</ModalStyledLabel>
+                       <ModalStyledInput
+                           type="text"
+                           value={branch}
+                           onChange={(e) => setBranch(e.target.value)}
+                           required
+                       />
+                   </div>
+                   <ModalStyledButton type="submit">Resubmit</ModalStyledButton>
+               </ModalStyledForm>
+           </ModalContent>
+       </ModalOverlay>
+     )}
+
+
       <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
+
+      <ImportantButtonContainer>
+
+         <ImportantSidebarButton onClick={() => setIsModalOpen(true)}>
+           <FontAwesomeIcon icon={faPlus} />
+           New Assignment
+         </ImportantSidebarButton>
+
+          <RefreshButton fetchAssignments={fetchAssignments}/>
+      </ImportantButtonContainer>
+
       <MainContent>
 
         <AssignmentDisplaySection
           header="Rejected Assignments"
           assignmentsList={assignments.rejected}
           icon={faTimesCircle}
+          setCurrentAssignment={setCurrentAssignment}
+          setResubmitModalOpen={setResubmitModalOpen}
         />
 
         <AssignmentDisplaySection

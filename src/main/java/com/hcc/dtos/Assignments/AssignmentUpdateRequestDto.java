@@ -1,5 +1,6 @@
 package com.hcc.dtos.Assignments;
 
+import com.hcc.entities.User;
 import com.hcc.enums.AssignmentStatusEnum;
 import com.hcc.enums.AuthorityEnum;
 import lombok.Getter;
@@ -13,6 +14,8 @@ public class AssignmentUpdateRequestDto {
     private String reviewVideoUrl;
 
     private AuthorityEnum updateAssignmentAsRole;
+
+    private User codeReviewer;
 
     public AuthorityEnum getUpdateAssignmentAsRole() {
         return updateAssignmentAsRole;
@@ -51,5 +54,13 @@ public class AssignmentUpdateRequestDto {
 
     public void setReviewVideoUrl(String reviewVideoUrl) {
         this.reviewVideoUrl = reviewVideoUrl;
+    }
+
+    public User getCodeReviewer() {
+        return codeReviewer;
+    }
+
+    public void setCodeReviewer(User codeReviewer) {
+        this.codeReviewer = codeReviewer;
     }
 }

@@ -7,7 +7,8 @@ import {
     faSpinner,
     faCheckCircle,
     faClipboardList,
-    faUserCircle
+    faUserCircle,
+    faSync
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -82,8 +83,32 @@ const MainContent = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: -100px;
+  margin-top: 0px;
 `;
+
+const ImportantButtonContainer = styled.div`
+    width: calc(100% - 200px);
+    margin-left: 200px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: -50px;
+    z-index: 1000;
+    & > :first-child {
+      margin-right: 15px;
+    }
+
+`;
+
+const RefreshButton = ({fetchAssignments}) => {
+    return (
+        <ImportantSidebarButton onClick={fetchAssignments}>
+            <FontAwesomeIcon icon={faSync} />
+            Refresh
+        </ImportantSidebarButton>
+    );
+};
 
 const TitleImage = styled.img`
   margin-left: 200px;
@@ -111,6 +136,7 @@ const CardContainer = styled.div`
 const SectionHeader = styled.h1`
   color: #FBCF75;
   margin-bottom: 10px;
+  font-size: 1.5rem;
 `;
 
 const CardsContainer = styled.div`
@@ -121,8 +147,8 @@ const CardsContainer = styled.div`
 `;
 
 const AssignmentCard = styled.div`
-  width: 200px;
-  height: 150px;
+  width: 190px;
+  height: 145px;
   background-color: #023D36;
   display: flex;
   flex-direction: column;
@@ -152,7 +178,7 @@ const CardIconWrapper = styled.div`
 
 const CardIcon = styled(FontAwesomeIcon)`
   color: #FBCF75;
-  font-size: 3em;
+  font-size: 2.8em;
 `;
 
 const CardText = styled.p`
@@ -221,6 +247,17 @@ const ModalStyledInput = styled.input`
     }
 `;
 
+const ModalStyledDisabledText = styled.text`
+    padding: 10px;
+    border: 1px solid #023D36;
+    border-radius: 5px;
+    background: #a6a6a6;
+    &:focus {
+        outline: none;
+        border-color: #FBCF75;
+    }
+`;
+
 const ModalStyledSelect = styled.select`
     padding: 10px;
     font-size: 1em;
@@ -245,6 +282,19 @@ const ModalStyledButton = styled.button`
         color: #023D36;
     }
 `;
+
+const ApproveButton = styled(ModalStyledButton)`
+    margin-right: 10px;
+`;
+
+const RejectButton = styled(ModalStyledButton)`
+    background-color: #FF3333;
+    &:hover {
+        background-color: darkred;
+        color: white;
+    }
+`;
+
 
 const UsernameDisplay = styled.div`
   background-color: #FBCF75;
@@ -286,7 +336,7 @@ const ClaimButton = styled.button`
   }
 `;
 
-const AssignmentDisplaySection = ({ header, assignmentsList, icon, setCurrentAssignment, setReviewModalOpen }) => {
+const AssignmentDisplaySection = ({ header, assignmentsList, icon, setCurrentAssignment, setReviewModalOpen, fetchAssignments }) => {
     const claimAssignment = (id) => {
         const updateData = {
             status: "CLAIMED",
@@ -304,6 +354,7 @@ const AssignmentDisplaySection = ({ header, assignmentsList, icon, setCurrentAss
             } else {
                 console.error(response.data.message);
             }
+            fetchAssignments();
         })
         .catch(error => {
             console.error("Error claiming assignment:", error);
@@ -329,7 +380,8 @@ const AssignmentDisplaySection = ({ header, assignmentsList, icon, setCurrentAss
             {header === "Submitted for Review and Resubmitted" &&
                 <ClaimButton onClick={() => claimAssignment(assignment.id)}>
                     Claim
-                </ClaimButton>}
+                </ClaimButton>
+            }
 
             {header === "In Review" &&
               <ClaimButton onClick={() => {
@@ -364,46 +416,6 @@ const AssignmentNumberSection = styled.div`
     font-weight: bold;
 `;
 
-const ReviewModal = ({ isOpen, assignment, onClose }) => {
-  const [reviewVideoURL, setReviewVideoURL] = useState('');
-
-  if (!isOpen) return null;
-
-  const handleApprove = () => {
-
-    onClose();
-  };
-
-  const handleReject = () => {
-
-    onClose();
-  };
-
-  return (
-    <ModalOverlay>
-      <ModalContent>
-        <ModalStyledLabel>Github URL: </ModalStyledLabel>
-        <a href={assignment.githubURL} target="_blank" rel="noopener noreferrer">{assignment.githubURL}</a>
-        <ModalStyledLabel>Branch: </ModalStyledLabel>
-        <p>{assignment.branch}</p>
-        <ModalStyledForm>
-          <ModalStyledLabel>Review Video URL:</ModalStyledLabel>
-          <ModalStyledInput
-            type="text"
-            value={reviewVideoURL}
-            onChange={(e) => setReviewVideoURL(e.target.value)}
-          />
-          <div>
-            <ModalStyledButton onClick={handleApprove}>Approve</ModalStyledButton>
-            <ModalStyledButton onClick={handleReject}>Reject</ModalStyledButton>
-          </div>
-        </ModalStyledForm>
-      </ModalContent>
-    </ModalOverlay>
-  );
-};
-
-
 
 const ReviewerDashboard = () => {
     const token = localStorage.getItem("jwt");
@@ -416,8 +428,11 @@ const ReviewerDashboard = () => {
     });
     const [isReviewModalOpen, setReviewModalOpen] = useState(false);
     const [currentAssignment, setCurrentAssignment] = useState(null);
+    const [videoURL, setVideoURL] = useState('');
 
-
+    const closeReviewModal = () => {
+        setReviewModalOpen(false);
+    }
 
     useEffect(() => {
 
@@ -431,35 +446,38 @@ const ReviewerDashboard = () => {
     }, [navigate]);
 
     useEffect(() => {
+        fetchAssignments();
 
-        axios.get('http://localhost:8080/api/assignments/', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    params: {
-                        type: 'reviewer'
-                    }
-                })
-            .then(response => {
-                if (response.data.success) {
-                    const fetchedAssignments = response.data.data.assignments;
-                    console.log(fetchedAssignments);
-                    setAssignments({
-                        inReview: fetchedAssignments.filter(assignment =>
-                            ['CLAIMED', 'RECLAIMED'].includes(assignment.status)
-                        ),
-                        submittedResubmitted: fetchedAssignments.filter(assignment =>
-                            ['SUBMITTED', 'RESUBMITTED'].includes(assignment.status)
-                        ),
-                        completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
-                    });
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching assignments:", error);
-            });
     }, []);
 
+const fetchAssignments = () => {
+    axios.get('http://localhost:8080/api/assignments/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            params: {
+                type: 'reviewer'
+            }
+        })
+    .then(response => {
+        if (response.data.success) {
+            const fetchedAssignments = response.data.data.assignments;
+            console.log(fetchedAssignments);
+            setAssignments({
+                inReview: fetchedAssignments.filter(assignment =>
+                    ['CLAIMED', 'RECLAIMED'].includes(assignment.status)
+                ),
+                submittedResubmitted: fetchedAssignments.filter(assignment =>
+                    ['SUBMITTED', 'RESUBMITTED'].includes(assignment.status)
+                ),
+                completed: fetchedAssignments.filter(assignment => assignment.status === 'COMPLETED')
+            });
+        }
+    })
+    .catch(error => {
+        console.error("Error fetching assignments:", error);
+    });
+ };
     const handleLogout = () => {
         localStorage.removeItem('jwt');
         navigate('/login');
@@ -467,6 +485,62 @@ const ReviewerDashboard = () => {
 
     const handleHomeClick = () => {
         navigate('/homepage');
+    };
+
+    const handleApproveAssignment = (e) => {
+        e.preventDefault();
+        const updateData = {
+            status: "COMPLETED",
+            reviewVideoUrl: `${videoURL}`,
+            updateAssignmentAsRole: "ROLE_REVIEWER"
+        };
+
+        axios.put(`http://localhost:8080/api/assignments/${currentAssignment.id}`, updateData, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem("jwt")}`
+            },
+        })
+        .then(response => {
+            if (response.data.success) {
+                console.log("Successfully completed assignment!");
+            } else {
+                console.error(response.data.message);
+            }
+            fetchAssignments();
+        })
+        .catch(error => {
+            console.error("Error completing assignment:", error);
+        });
+
+        closeReviewModal();
+    };
+
+    const handleRejectAssignment = (e) => {
+        e.preventDefault();
+        const updateData = {
+            status: "REJECTED",
+            reviewVideoUrl: `${videoURL}`,
+            updateAssignmentAsRole: "ROLE_REVIEWER"
+        };
+
+        axios.put(`http://localhost:8080/api/assignments/${currentAssignment.id}`, updateData, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem("jwt")}`
+            },
+        })
+        .then(response => {
+            if (response.data.success) {
+                console.log("Successfully completed assignment!");
+            } else {
+                console.error(response.data.message);
+            }
+            fetchAssignments();
+        })
+        .catch(error => {
+            console.error("Error completing assignment:", error);
+        });
+
+        closeReviewModal();
     };
 
     return (
@@ -487,19 +561,36 @@ const ReviewerDashboard = () => {
             </Sidebar>
 
             {isReviewModalOpen && (
-                            <ModalOverlay>
-                                <ModalContent>
-                                    <ModalStyledForm>
-                                        <ModalStyledLabel>Your Label:</ModalStyledLabel>
-                                        <ModalStyledInput type="text" placeholder="Your input..." />
-                                        <ModalStyledButton>Submit</ModalStyledButton>
-                                    </ModalStyledForm>
-                                    <ModalStyledButton onClick={() => setReviewModalOpen(false)}>Close Modal</ModalStyledButton>
-                                </ModalContent>
-                            </ModalOverlay>
-                        )}
+                <ModalOverlay onClick={closeReviewModal}>
+                      <ModalContent onClick={(e) => e.stopPropagation()}>
+                          <ModalStyledForm>
+                            <ModalStyledLabel>Github URL: </ModalStyledLabel>
+                            <ModalStyledDisabledText> <a href={currentAssignment.githubUrl} target="_blank" rel="noopener noreferrer">{currentAssignment.githubUrl}</a>
+                            </ModalStyledDisabledText>
+
+                            <ModalStyledLabel>Branch: </ModalStyledLabel>
+                            <ModalStyledDisabledText>
+                                {currentAssignment.branch}
+                            </ModalStyledDisabledText>
+                          <ModalStyledLabel>Review Video URL:</ModalStyledLabel>
+                          <ModalStyledInput
+                             type="text"
+                             value={videoURL}
+                             onChange={(e) => setVideoURL(e.target.value)}
+                          />
+                          <div>
+                            <ApproveButton onClick={handleApproveAssignment}>Approve</ApproveButton>
+                            <RejectButton onClick={handleRejectAssignment}>Reject</RejectButton>
+                          </div>
+                        </ModalStyledForm>
+                      </ModalContent>
+                    </ModalOverlay>
+            )}
 
             <TitleImage src="images/bloom_title_no_tagline.png" alt="Bloom Code Camp" />
+                  <ImportantButtonContainer>
+                      <RefreshButton fetchAssignments={fetchAssignments}/>
+                  </ImportantButtonContainer>
             <MainContent>
 
                 <AssignmentDisplaySection
@@ -508,18 +599,21 @@ const ReviewerDashboard = () => {
                     icon={faSpinner}
                     setCurrentAssignment={setCurrentAssignment}
                     setReviewModalOpen={setReviewModalOpen}
+                    fetchAssignments={fetchAssignments}
                 />
 
                 <AssignmentDisplaySection
                     header="Submitted for Review and Resubmitted"
                     assignmentsList={assignments.submittedResubmitted}
                     icon={faClipboardList}
+                    fetchAssignments={fetchAssignments}
                 />
 
                 <AssignmentDisplaySection
                     header="Completed"
                     assignmentsList={assignments.completed}
                     icon={faCheckCircle}
+                    fetchAssignments={fetchAssignments}
                 />
 
             </MainContent>

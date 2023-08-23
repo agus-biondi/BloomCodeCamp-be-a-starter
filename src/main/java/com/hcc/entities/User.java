@@ -29,6 +29,9 @@ public class User implements UserDetails {
     @JsonIgnore
     private String password;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<Authority> authorities = new ArrayList<>();
+
     public User() {
 
     }
@@ -61,10 +64,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> roles = new ArrayList<>();
-        roles.add(new Authority(AuthorityEnum.ROLE_STUDENT));
-        roles.add(new Authority(AuthorityEnum.ROLE_REVIEWER));
-        return roles;
+        return authorities;
     }
 
     @Override
@@ -91,5 +91,13 @@ public class User implements UserDetails {
 
     public LocalDate getCohortStartDate() {
         return cohortStartDate;
+    }
+
+    public List<Authority> getAuthorityEntities() {
+        return authorities;
+    }
+
+    public void setAuthorities(List<Authority> authorities) {
+        this.authorities = authorities;
     }
 }
