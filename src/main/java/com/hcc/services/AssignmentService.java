@@ -321,7 +321,7 @@ public class AssignmentService {
      */
     private boolean isValidStatusChange(AssignmentStatusEnum status, AuthorityEnum authority) {
 
-        List<AssignmentStatusEnum> validStatuses = validStatusChangesForRoleMap.get(authority);
+        Set<AssignmentStatusEnum> validStatuses = validStatusChangesForRoleMap.get(authority);
         if (validStatuses != null && validStatuses.contains(status)) {
             return true;
         }
