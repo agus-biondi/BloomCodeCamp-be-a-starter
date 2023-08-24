@@ -52,7 +52,7 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());
         }).and();
 
-        //require all requests to be authenticated, if not redirect to a log-in page
+        //require all requests to be authenticated, except log in page
         http.authorizeRequests()
                 .antMatchers("/api/auth/login").permitAll()
                 .anyRequest().authenticated();

@@ -1,8 +1,5 @@
-
 package com.hcc.utils;
 
-
-import com.hcc.entities.Authority;
 import com.hcc.entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -10,14 +7,12 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
+
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
 import java.util.function.Function;
 
 @Component
@@ -29,34 +24,6 @@ public class JwtUtil {
     // get the jwt secret from the properties file
     @Value("${jwt.secret}")
     private String secret;
-
-    //get username from token
-    public String getUsernameFromToken(String token){
-        return getClaimFromToken(token, Claims::getSubject);
-    }
-
-    //get the claims (not sure which datatype- make generic to pass the claim) from token-objects inside jwt
-    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver ){
-        final Claims claims = getAllClaimsFromToken(token);
-        return claimsResolver.apply(claims);
-    }
-
-    private Claims getAllClaimsFromToken(String token){
-        return Jwts.parser()
-                .setSigningKey(secret)
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    //check if token is expired
-    public Date getExpirationDateFromToken(String token){
-        return getClaimFromToken(token, Claims::getExpiration);
-    }
-
-    public boolean isTokenExpired(String token){
-        final Date expiration = getExpirationDateFromToken(token);
-        return expiration.before(new Date());
-    }
 
     //generate token
     public String generateToken(User user){
@@ -75,11 +42,42 @@ public class JwtUtil {
     }
 
     //validate token
-
     public boolean validateToken(String token, UserDetails userDetails){
         final String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
+    public boolean isTokenExpired(String token){
+        final Date expiration = getExpirationDateFromToken(token);
+        return expiration.before(new Date());
+    }
+
+    //check if token is expired
+    public Date getExpirationDateFromToken(String token){
+        return getClaimFromToken(token, Claims::getExpiration);
+    }
+
+
+
+    //get username from token
+    public String getUsernameFromToken(String token){
+        return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    //get the claims
+    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver ){
+        final Claims claims = getAllClaimsFromToken(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private Claims getAllClaimsFromToken(String token){
+        return Jwts.parser()
+                .setSigningKey(secret)
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+
+
 
 }
 

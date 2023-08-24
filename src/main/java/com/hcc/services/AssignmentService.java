@@ -22,10 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +34,7 @@ public class AssignmentService {
     @Autowired
     private AssignmentMapper assignmentMapper;
 
-    Map<AuthorityEnum, List<AssignmentStatusEnum>> validStatusChangesForRoleMap;
+    Map<AuthorityEnum, Set<AssignmentStatusEnum>> validStatusChangesForRoleMap;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
@@ -124,6 +121,7 @@ public class AssignmentService {
      */
     public ResponseEntity<ApiResponse> updateAssignmentDetails(Long id, AssignmentUpdateRequestDto updateRequest, User user) {
         ApiResponse response = new ApiResponse();
+
         //User doesn't have authority to act the way he's claiming
         boolean hasRequiredAuthority = user.getAuthorities()
                 .stream()
@@ -338,12 +336,12 @@ public class AssignmentService {
 
         this.validStatusChangesForRoleMap = new HashMap<>();
 
-        validStatusChangesForRoleMap.put(AuthorityEnum.ROLE_STUDENT, Arrays.asList(
+        validStatusChangesForRoleMap.put(AuthorityEnum.ROLE_STUDENT, Set.of(
                 AssignmentStatusEnum.SUBMITTED,
                 AssignmentStatusEnum.RESUBMITTED
         ));
 
-        validStatusChangesForRoleMap.put(AuthorityEnum.ROLE_REVIEWER, Arrays.asList(
+        validStatusChangesForRoleMap.put(AuthorityEnum.ROLE_REVIEWER, Set.of(
                 AssignmentStatusEnum.CLAIMED,
                 AssignmentStatusEnum.REJECTED,
                 AssignmentStatusEnum.RECLAIMED,
