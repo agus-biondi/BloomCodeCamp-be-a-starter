@@ -1,7 +1,33 @@
-# Bloom Code Camp LMS
 
-## Welcome to the Backend Repository for Bloom Code Camp LMS, an assignment review app!
-To set this project up you will need to clone it to your local computer and make sure to have the prereqiosites of...
+<img src="frontend/public/images/bloom_icon_no_bg.png" width="200"><img src="frontend/public/images/bloom_title_no_tagline.png" width="500" height="auto">
+
+
+## Introduction
+BloomCodeCamp makes it easy to for coding bootcamps to manage assignment submission by students, and assginment feedback by reviewers.
+To see it in action see the video below:
+
+<a href="https://www.loom.com/share/d57e96372e5d4e33926fe3294aafc7ed?sid=7e0c5952-724a-4c28-b41f-d53450362af9" target="_blank">
+    <img src="frontend/public/images/bloom_code_camp_video_demo_thumbnail.png" alt="Video Demo" width="300"/>
+</a>
+
+
+
+## Key Features
+- 🔐 **Secure Log-In System**: Differentiated user roles for students and reviewers.
+- 📝 **Assignment Submissions**: Students can effortlessly submit assignments for review.
+- 🚀 **Real-time Feedback**: Students receive timely feedback from reviewers.
+- ✅ **Comprehensive Status**: Track assignments as they're reviewed, accepted, or rejected.
+
+
+## Tech Stack
+- **Backend**: Springboot and Spring Data JPA with Hibernate
+- **Database**: PostgreSQL
+- **Frontend**: ReactJS
+- **Authentication**: Spring Security with JWT
+
+
+## To get started
+To set this project up you will need to clone it to your local computer and make sure to have the pre-requisits of...
 - docker / dockerdesktop
 - docker compose
 - intellij Idea
